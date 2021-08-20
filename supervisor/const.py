@@ -14,8 +14,10 @@ from aiohttp import __version__ as aiohttpversion
 # #if ghcr.io is blocked,please set blank
 # DOCKER_REPO_PREFIX="ghcr.io/"
 # DOCKER_REPO_ORG="homeassistant"
+# URL_HASSIO_APPARMOR = "https://version.home-assistant.io/apparmor.txt"
+# URL_HASSIO_VERSION = "https://version.home-assistant.io/{channel}.json"
 
-## china
+## china config
 URL_GIT_SERVER="https://gitee.com/"
 URL_GIT_SERVER_RAW="https://gitee.com/"
 URL_GIT_SERVER_RAW_PRERIX="raw/"
@@ -24,13 +26,14 @@ URL_GIT_ADDON_PROJECT="hassiocn-addons"
 #if ghcr.io is blocked,please set blank
 DOCKER_REPO_PREFIX=""
 DOCKER_REPO_ORG="homeassistant"
+URL_HASSIO_APPARMOR = "https://gitee.com/hassiocn/version/raw/master/apparmor.txt"
+URL_HASSIO_VERSION = "https://gitee.com/hassiocn/version/raw/master/{channel}.json"
 
 SUPERVISOR_VERSION = "DEV"
 SERVER_SOFTWARE = f"HomeAssistantSupervisor/{SUPERVISOR_VERSION} aiohttp/{aiohttpversion} Python/{systemversion[0]}.{systemversion[1]}"
 
 URL_HASSIO_ADDONS = "{URL_GIT_SERVER}{URL_GIT_MAIN_PROJECT}/addons"
-URL_HASSIO_APPARMOR = "https://version.home-assistant.io/apparmor.txt"
-URL_HASSIO_VERSION = "https://version.home-assistant.io/{channel}.json"
+
 
 SUPERVISOR_DATA = Path("/data")
 
