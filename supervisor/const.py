@@ -35,6 +35,8 @@ RUN_SUPERVISOR_STATE = Path("/run/supervisor")
 SYSTEMD_JOURNAL_PERSISTENT = Path("/var/log/journal")
 SYSTEMD_JOURNAL_VOLATILE = Path("/run/log/journal")
 
+DOCKER_REPO_PREFIX="ghcr.io/"
+DOCKER_REPO_ORG="homeassistant"
 DOCKER_NETWORK = "hassio"
 DOCKER_NETWORK_MASK = ip_network("172.30.32.0/23")
 DOCKER_NETWORK_RANGE = ip_network("172.30.33.0/24")

@@ -23,6 +23,8 @@ from ..const import (
     ATTR_WAIT_BOOT,
     ATTR_WATCHDOG,
     FILE_HASSIO_HOMEASSISTANT,
+    DOCKER_REPO_PREFIX,
+    DOCKER_REPO_ORG
 )
 from ..coresys import CoreSys, CoreSysAttributes
 from ..utils.common import FileConfiguration
@@ -144,7 +146,7 @@ class HomeAssistant(FileConfiguration, CoreSysAttributes):
         """Return image name of the Home Assistant container."""
         if self._data.get(ATTR_IMAGE):
             return self._data[ATTR_IMAGE]
-        return f"ghcr.io/home-assistant/{self.sys_machine}-homeassistant"
+        return f"{DOCKER_REPO_PREFIX}{DOCKER_REPO_ORG}/{self.sys_machine}-homeassistant"
 
     @image.setter
     def image(self, value: str) -> None:

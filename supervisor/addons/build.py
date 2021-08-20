@@ -13,6 +13,8 @@ from ..const import (
     ATTR_SQUASH,
     FILE_SUFFIX_CONFIGURATION,
     META_ADDON,
+    DOCKER_REPO_PREFIX,
+    DOCKER_REPO_ORG
 )
 from ..coresys import CoreSys, CoreSysAttributes
 from ..exceptions import ConfigurationFileError
@@ -48,7 +50,7 @@ class AddonBuild(FileConfiguration, CoreSysAttributes):
     def base_image(self) -> str:
         """Return base image for this add-on."""
         if not self._data[ATTR_BUILD_FROM]:
-            return f"ghcr.io/home-assistant/{self.sys_arch.default}-base:latest"
+            return f"{DOCKER_REPO_PREFIX}{DOCKER_REPO_ORG}/{self.sys_arch.default}-base:latest"
 
         # Evaluate correct base image
         arch = self.sys_arch.match(list(self._data[ATTR_BUILD_FROM].keys()))
