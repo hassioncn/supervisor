@@ -26,10 +26,11 @@ RUN \
         go \
     \
     && git clone -b v${VCN_VERSION} --depth 1 \
+        # TODO github?
         https://github.com/codenotary/vcn \
     && cd vcn \
     \
-    # Fix: https://github.com/codenotary/vcn/issues/131
+    # Fix: https://github.com/codenotary/vcn/issues/131 # TODO github?
     && go get github.com/codenotary/immudb@4cf9e2ae06ac2e6ec98a60364c3de3eab5524757 \
     \
     && if [ "${BUILD_ARCH}" = "armhf" ]; then \
@@ -54,6 +55,7 @@ RUN \
 
 # Install requirements
 COPY requirements.txt .
+# TODO home-assistant.io
 RUN \
     export MAKEFLAGS="-j$(nproc)" \
     && pip3 install --no-cache-dir --no-index --only-binary=:all: --find-links \
