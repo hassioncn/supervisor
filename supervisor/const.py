@@ -5,11 +5,30 @@ from pathlib import Path
 from sys import version_info as systemversion
 
 from aiohttp import __version__ as aiohttpversion
+## origin config
+# URL_GIT_SERVER="https://github.com/"
+# URL_GIT_SERVER_RAW="https://raw.githubusercontent.com/"
+# URL_GIT_SERVER_RAW_PRERIX=""
+# URL_GIT_MAIN_PROJECT="home-assistant"
+# URL_GIT_ADDON_PROJECT="hassio-addons"
+# #if ghcr.io is blocked,please set blank
+# DOCKER_REPO_PREFIX="ghcr.io/"
+# DOCKER_REPO_ORG="homeassistant"
+
+## china
+URL_GIT_SERVER="https://gitee.com/"
+URL_GIT_SERVER_RAW="https://gitee.com/"
+URL_GIT_SERVER_RAW_PRERIX="raw/"
+URL_GIT_MAIN_PROJECT="hassiocn"
+URL_GIT_ADDON_PROJECT="hassiocn-addons"
+#if ghcr.io is blocked,please set blank
+DOCKER_REPO_PREFIX=""
+DOCKER_REPO_ORG="homeassistant"
 
 SUPERVISOR_VERSION = "DEV"
 SERVER_SOFTWARE = f"HomeAssistantSupervisor/{SUPERVISOR_VERSION} aiohttp/{aiohttpversion} Python/{systemversion[0]}.{systemversion[1]}"
 
-URL_HASSIO_ADDONS = "https://github.com/home-assistant/addons"
+URL_HASSIO_ADDONS = "{URL_GIT_SERVER}{URL_GIT_MAIN_PROJECT}/addons"
 URL_HASSIO_APPARMOR = "https://version.home-assistant.io/apparmor.txt"
 URL_HASSIO_VERSION = "https://version.home-assistant.io/{channel}.json"
 
@@ -35,9 +54,6 @@ RUN_SUPERVISOR_STATE = Path("/run/supervisor")
 SYSTEMD_JOURNAL_PERSISTENT = Path("/var/log/journal")
 SYSTEMD_JOURNAL_VOLATILE = Path("/run/log/journal")
 
-#if ghcr.io is blocked,please set blank
-DOCKER_REPO_PREFIX=""
-DOCKER_REPO_ORG="homeassistant"
 DOCKER_NETWORK = "hassio"
 DOCKER_NETWORK_MASK = ip_network("172.30.32.0/23")
 DOCKER_NETWORK_RANGE = ip_network("172.30.33.0/24")

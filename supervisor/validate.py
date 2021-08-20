@@ -36,6 +36,8 @@ from .const import (
     ATTR_VERSION,
     ATTR_WAIT_BOOT,
     SUPERVISOR_VERSION,
+    URL_GIT_SERVER,
+    URL_GIT_ADDON_PROJECT,
     LogLevel,
     UpdateChannel,
 )
@@ -144,7 +146,7 @@ SCHEMA_SUPERVISOR_CONFIG = vol.Schema(
         vol.Optional(ATTR_IMAGE): docker_image,
         vol.Optional(
             ATTR_ADDONS_CUSTOM_LIST,
-            default=["https://github.com/hassio-addons/repository"],
+            default=["{URL_GIT_SERVER}{URL_GIT_ADDON_PROJECT}/repository"],
         ): repositories,
         vol.Optional(ATTR_WAIT_BOOT, default=5): wait_boot,
         vol.Optional(ATTR_LOGGING, default=LogLevel.INFO): vol.Coerce(LogLevel),
