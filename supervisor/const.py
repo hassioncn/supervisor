@@ -6,10 +6,8 @@ from sys import version_info as systemversion
 
 from aiohttp import __version__ as aiohttpversion
 
-## origin config
+# origin config
 # URL_GIT_SERVER="https://github.com/"
-# URL_GIT_SERVER_RAW="https://raw.githubusercontent.com/"
-# URL_GIT_SERVER_RAW_PRERIX=""
 # URL_GIT_MAIN_PROJECT="home-assistant"
 # URL_GIT_ADDON_PROJECT="hassio-addons"
 # #if ghcr.io is blocked,please set blank
@@ -18,10 +16,8 @@ from aiohttp import __version__ as aiohttpversion
 # URL_HASSIO_APPARMOR = "https://version.home-assistant.io/apparmor.txt"
 # URL_HASSIO_VERSION = "https://version.home-assistant.io/{channel}.json"
 
-## china config
+# china config
 URL_GIT_SERVER = "https://gitee.com/"
-URL_GIT_SERVER_RAW = "https://gitee.com/"
-URL_GIT_SERVER_RAW_PRERIX = "raw/"
 URL_GIT_MAIN_PROJECT = "hassiocn"
 URL_GIT_ADDON_PROJECT = "hassiocn-addons"
 # if ghcr.io is blocked,please set blank
@@ -33,7 +29,7 @@ URL_HASSIO_VERSION = "https://gitee.com/hassiocn/version/raw/master/{channel}.js
 SUPERVISOR_VERSION = "DEV"
 SERVER_SOFTWARE = f"HomeAssistantSupervisor/{SUPERVISOR_VERSION} aiohttp/{aiohttpversion} Python/{systemversion[0]}.{systemversion[1]}"
 
-URL_HASSIO_ADDONS = "{URL_GIT_SERVER}{URL_GIT_MAIN_PROJECT}/addons"
+URL_HASSIO_ADDONS = f"{URL_GIT_SERVER}{URL_GIT_MAIN_PROJECT}/addons"
 
 
 SUPERVISOR_DATA = Path("/data")

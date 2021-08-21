@@ -42,7 +42,7 @@ def docker() -> DockerAPI:
     images = [
         MagicMock(
             tags=[
-                "{DOCKER_REPO_PREFIX}{DOCKER_REPO_ORG}/amd64-hassio-supervisor:latest"
+                f"{DOCKER_REPO_PREFIX}{DOCKER_REPO_ORG}/amd64-hassio-supervisor:latest"
             ]
         )
     ]
@@ -246,7 +246,7 @@ def store_addon(coresys: CoreSys, tmp_path):
 def repository(coresys: CoreSys):
     """Repository fixture."""
     repository_obj = Repository(
-        coresys, "{URL_GIT_SERVER}awesome-developer/awesome-repo"
+        coresys, f"{URL_GIT_SERVER}awesome-developer/awesome-repo"
     )
 
     coresys.store.repositories[repository_obj.slug] = repository_obj
