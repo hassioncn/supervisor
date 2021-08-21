@@ -13,9 +13,9 @@ import pytest
 from supervisor.api import RestAPI
 from supervisor.bootstrap import initialize_coresys
 from supervisor.const import (
-    REQUEST_FROM,
-    DOCKER_REPO_PREFIX,
     DOCKER_REPO_ORG,
+    DOCKER_REPO_PREFIX,
+    REQUEST_FROM,
     URL_GIT_SERVER,
 )
 from supervisor.coresys import CoreSys

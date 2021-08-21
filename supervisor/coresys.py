@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from .arch import CpuArch
     from .auth import Auth
     from .backups.manager import BackupManager
+    from .bus import Bus
     from .core import Core
     from .dbus.manager import DBusManager
     from .discovery import Discovery
@@ -40,7 +41,6 @@ if TYPE_CHECKING:
     from .store import StoreManager
     from .supervisor import Supervisor
     from .updater import Updater
-    from .bus import Bus
 
 
 T = TypeVar("T")

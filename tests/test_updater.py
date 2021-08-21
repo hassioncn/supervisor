@@ -4,7 +4,7 @@ import pytest
 
 from supervisor.coresys import CoreSys
 
-URL_TEST = "https://gitee.com/hassiocn/version/raw/master/stable.json"
+URL_TEST = "https://version.home-assistant.io/stable.json"
 
 
 @pytest.mark.asyncio
