@@ -36,8 +36,8 @@ from .const import (
     ATTR_VERSION,
     ATTR_WAIT_BOOT,
     SUPERVISOR_VERSION,
-    URL_GIT_SERVER,
     URL_GIT_ADDON_PROJECT,
+    URL_GIT_SERVER,
     LogLevel,
     UpdateChannel,
 )

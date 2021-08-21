@@ -22,9 +22,9 @@ from ..const import (
     ATTR_VERSION,
     ATTR_WAIT_BOOT,
     ATTR_WATCHDOG,
-    FILE_HASSIO_HOMEASSISTANT,
-    DOCKER_REPO_PREFIX,
     DOCKER_REPO_ORG,
+    DOCKER_REPO_PREFIX,
+    FILE_HASSIO_HOMEASSISTANT,
 )
 from ..coresys import CoreSys, CoreSysAttributes
 from ..utils.common import FileConfiguration
