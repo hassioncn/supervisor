@@ -18,7 +18,8 @@ on:
         description: "Stable"
         required: true
         default: "true"
-
+  release:
+      types: ["published"]
 env:
   BUILD_NAME: supervisor
   BUILD_TYPE: supervisor
@@ -114,7 +115,7 @@ jobs:
   run_supervisor:
     runs-on: ubuntu-latest
     name: Run the Supervisor
-    needs: ["build", "codenotary", "init"]
+    needs: ["build", "init"]
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2.3.4
@@ -133,7 +134,7 @@ jobs:
         if: needs.init.outputs.publish == 'true'
         run: |
           docker pull hassioncn/amd64-hassio-supervisor:${{ needs.init.outputs.version }}
-          docker tag hassioncn/amd64-hassio-supervisor:${{ needs.init.outputs.version }} homeassistant/amd64-hassio-supervisor:runner
+          docker tag hassioncn/amd64-hassio-supervisor:${{ needs.init.outputs.version }} hassioncn/amd64-hassio-supervisor:runner
 
       - name: Create the Supervisor
         run: |
