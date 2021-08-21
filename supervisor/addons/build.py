@@ -14,7 +14,7 @@ from ..const import (
     FILE_SUFFIX_CONFIGURATION,
     META_ADDON,
     DOCKER_REPO_PREFIX,
-    DOCKER_REPO_ORG
+    DOCKER_REPO_ORG,
 )
 from ..coresys import CoreSys, CoreSysAttributes
 from ..exceptions import ConfigurationFileError

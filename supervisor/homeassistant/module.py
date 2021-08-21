@@ -24,7 +24,7 @@ from ..const import (
     ATTR_WATCHDOG,
     FILE_HASSIO_HOMEASSISTANT,
     DOCKER_REPO_PREFIX,
-    DOCKER_REPO_ORG
+    DOCKER_REPO_ORG,
 )
 from ..coresys import CoreSys, CoreSysAttributes
 from ..utils.common import FileConfiguration

@@ -4,7 +4,7 @@ from typing import Optional
 
 from awesomeversion import AwesomeVersion, AwesomeVersionException
 
-from ..const import ATTR_IMAGE, ATTR_VERSION,DOCKER_REPO_PREFIX,DOCKER_REPO_ORG
+from ..const import ATTR_IMAGE, ATTR_VERSION, DOCKER_REPO_PREFIX, DOCKER_REPO_ORG
 from ..coresys import CoreSysAttributes
 from ..utils.common import FileConfiguration
 

@@ -12,7 +12,12 @@ import pytest
 
 from supervisor.api import RestAPI
 from supervisor.bootstrap import initialize_coresys
-from supervisor.const import REQUEST_FROM,DOCKER_REPO_PREFIX,DOCKER_REPO_ORG,URL_GIT_SERVER
+from supervisor.const import (
+    REQUEST_FROM,
+    DOCKER_REPO_PREFIX,
+    DOCKER_REPO_ORG,
+    URL_GIT_SERVER,
+)
 from supervisor.coresys import CoreSys
 from supervisor.dbus.network import NetworkManager
 from supervisor.docker import DockerAPI
@@ -34,7 +39,13 @@ async def mock_async_return_true() -> bool:
 @pytest.fixture
 def docker() -> DockerAPI:
     """Mock DockerAPI."""
-    images = [MagicMock(tags=["{DOCKER_REPO_PREFIX}{DOCKER_REPO_ORG}/amd64-hassio-supervisor:latest"])]
+    images = [
+        MagicMock(
+            tags=[
+                "{DOCKER_REPO_PREFIX}{DOCKER_REPO_ORG}/amd64-hassio-supervisor:latest"
+            ]
+        )
+    ]
 
     with patch("docker.DockerClient", return_value=MagicMock()), patch(
         "supervisor.docker.DockerAPI.images", return_value=MagicMock()
