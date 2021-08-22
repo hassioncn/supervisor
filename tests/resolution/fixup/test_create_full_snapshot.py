@@ -5,8 +5,7 @@ from unittest.mock import AsyncMock
 from supervisor.coresys import CoreSys
 from supervisor.resolution.const import ContextType, SuggestionType
 from supervisor.resolution.data import Suggestion
-from supervisor.resolution.fixups.create_full_snapshot import \
-    FixupCreateFullSnapshot
+from supervisor.resolution.fixups.create_full_snapshot import FixupCreateFullSnapshot
 
 
 async def test_fixup(coresys: CoreSys):

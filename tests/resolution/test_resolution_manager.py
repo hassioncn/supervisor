@@ -5,9 +5,13 @@ import pytest
 
 from supervisor.coresys import CoreSys
 from supervisor.exceptions import ResolutionError
-from supervisor.resolution.const import (ContextType, IssueType,
-                                         SuggestionType, UnhealthyReason,
-                                         UnsupportedReason)
+from supervisor.resolution.const import (
+    ContextType,
+    IssueType,
+    SuggestionType,
+    UnhealthyReason,
+    UnsupportedReason,
+)
 from supervisor.resolution.data import Issue, Suggestion
 
 

@@ -3,13 +3,22 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from supervisor.const import (ATTR_ISSUES, ATTR_SUGGESTIONS, ATTR_UNHEALTHY,
-                              ATTR_UNSUPPORTED, CoreState)
+from supervisor.const import (
+    ATTR_ISSUES,
+    ATTR_SUGGESTIONS,
+    ATTR_UNHEALTHY,
+    ATTR_UNSUPPORTED,
+    CoreState,
+)
 from supervisor.coresys import CoreSys
 from supervisor.exceptions import ResolutionError
-from supervisor.resolution.const import (ContextType, IssueType,
-                                         SuggestionType, UnhealthyReason,
-                                         UnsupportedReason)
+from supervisor.resolution.const import (
+    ContextType,
+    IssueType,
+    SuggestionType,
+    UnhealthyReason,
+    UnsupportedReason,
+)
 from supervisor.resolution.data import Issue, Suggestion
 
 

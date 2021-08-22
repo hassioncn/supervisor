@@ -2,9 +2,10 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from tests.const import TEST_INTERFACE, TEST_INTERFACE_WLAN
 
 from supervisor.const import DOCKER_NETWORK, DOCKER_NETWORK_MASK
+
+from tests.const import TEST_INTERFACE, TEST_INTERFACE_WLAN
 
 
 @pytest.mark.asyncio

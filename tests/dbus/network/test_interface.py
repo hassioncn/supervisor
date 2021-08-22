@@ -2,10 +2,11 @@
 from ipaddress import IPv4Address, IPv4Interface, IPv6Address, IPv6Interface
 
 import pytest
-from tests.const import TEST_INTERFACE, TEST_INTERFACE_WLAN
 
 from supervisor.dbus.const import DeviceType, InterfaceMethod
 from supervisor.dbus.network import NetworkManager
+
+from tests.const import TEST_INTERFACE, TEST_INTERFACE_WLAN
 
 
 @pytest.mark.asyncio

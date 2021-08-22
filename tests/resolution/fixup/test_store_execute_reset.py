@@ -6,8 +6,7 @@ from unittest.mock import AsyncMock, patch
 from supervisor.coresys import CoreSys
 from supervisor.resolution.const import ContextType, IssueType, SuggestionType
 from supervisor.resolution.data import Issue, Suggestion
-from supervisor.resolution.fixups.store_execute_reset import \
-    FixupStoreExecuteReset
+from supervisor.resolution.fixups.store_execute_reset import FixupStoreExecuteReset
 
 
 async def test_fixup(coresys: CoreSys, tmp_path):

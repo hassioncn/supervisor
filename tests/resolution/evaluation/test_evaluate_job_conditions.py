@@ -5,8 +5,7 @@ from unittest.mock import patch
 from supervisor.const import CoreState
 from supervisor.coresys import CoreSys
 from supervisor.jobs.const import JobCondition
-from supervisor.resolution.evaluations.job_conditions import \
-    EvaluateJobConditions
+from supervisor.resolution.evaluations.job_conditions import EvaluateJobConditions
 
 
 async def test_evaluation(coresys: CoreSys):

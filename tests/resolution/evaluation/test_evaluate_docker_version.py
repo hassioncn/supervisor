@@ -4,8 +4,7 @@ from unittest.mock import patch
 
 from supervisor.const import CoreState
 from supervisor.coresys import CoreSys
-from supervisor.resolution.evaluations.docker_version import \
-    EvaluateDockerVersion
+from supervisor.resolution.evaluations.docker_version import EvaluateDockerVersion
 
 
 async def test_evaluation(coresys: CoreSys):

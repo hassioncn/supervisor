@@ -15,7 +15,6 @@ from .const import (
     ATTR_SUPERVISOR_INTERNET,
     SUPERVISOR_VERSION,
     URL_HASSIO_APPARMOR,
-    URL_HASSIO_VERSION,
     URL_VERSION,
 )
 from .coresys import CoreSys, CoreSysAttributes

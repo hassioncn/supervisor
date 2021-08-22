@@ -2,13 +2,13 @@
 from ipaddress import ip_address, ip_interface
 
 import pytest
-from tests.const import TEST_INTERFACE
 
 from supervisor.dbus.payloads.generate import interface_update_payload
-from supervisor.host.const import (AuthMethod, InterfaceMethod, InterfaceType,
-                                   WifiMode)
+from supervisor.host.const import AuthMethod, InterfaceMethod, InterfaceType, WifiMode
 from supervisor.host.network import VlanConfig, WifiConfig
 from supervisor.utils.gdbus import DBus
+
+from tests.const import TEST_INTERFACE
 
 
 @pytest.mark.asyncio
