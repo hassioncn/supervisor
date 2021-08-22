@@ -4,7 +4,7 @@ from typing import Optional
 
 from awesomeversion import AwesomeVersion, AwesomeVersionException
 
-from ..const import ATTR_IMAGE, ATTR_VERSION
+from ..const import ATTR_IMAGE, ATTR_VERSION, DOCKER_PREFIX
 from ..coresys import CoreSysAttributes
 from ..utils.common import FileConfiguration
 
@@ -29,7 +29,7 @@ class PluginBase(ABC, FileConfiguration, CoreSysAttributes):
         """Return current image of plugin."""
         if self._data.get(ATTR_IMAGE):
             return self._data[ATTR_IMAGE]
-        return f"ghcr.io/home-assistant/{self.sys_arch.supervisor}-hassio-{self.slug}"
+        return f"{DOCKER_PREFIX}home-assistant/{self.sys_arch.supervisor}-hassio-{self.slug}"
 
     @image.setter
     def image(self, value: str) -> None:
