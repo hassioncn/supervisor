@@ -4,7 +4,8 @@ from unittest.mock import patch
 
 from supervisor.const import CoreState
 from supervisor.coresys import CoreSys
-from supervisor.resolution.evaluations.content_trust import EvaluateContentTrust
+from supervisor.resolution.evaluations.content_trust import \
+    EvaluateContentTrust
 
 
 async def test_evaluation(coresys: CoreSys):

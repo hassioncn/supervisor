@@ -1,6 +1,7 @@
 """Test exception helpers."""
 
-from supervisor.utils import check_exception_chain, get_message_from_exception_chain
+from supervisor.utils import (check_exception_chain,
+                              get_message_from_exception_chain)
 
 
 def test_simple_chain_exception():

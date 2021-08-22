@@ -1,16 +1,12 @@
 """Test Tarfile functions."""
 import os
-from pathlib import Path, PurePath
 import shutil
+from pathlib import Path, PurePath
 
 import attr
 
-from supervisor.utils.tar import (
-    SecureTarFile,
-    _is_excluded_by_filter,
-    atomic_contents_add,
-    secure_path,
-)
+from supervisor.utils.tar import (SecureTarFile, _is_excluded_by_filter,
+                                  atomic_contents_add, secure_path)
 
 
 @attr.s

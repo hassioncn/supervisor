@@ -2,19 +2,15 @@
 import os
 from unittest.mock import patch
 
-from awesomeversion import AwesomeVersion
 import pytest
+from awesomeversion import AwesomeVersion
 
 from supervisor.const import SUPERVISOR_VERSION, CoreState
 from supervisor.exceptions import AddonConfigurationError
 from supervisor.misc.filter import filter_data
-from supervisor.resolution.const import (
-    ContextType,
-    IssueType,
-    SuggestionType,
-    UnhealthyReason,
-    UnsupportedReason,
-)
+from supervisor.resolution.const import (ContextType, IssueType,
+                                         SuggestionType, UnhealthyReason,
+                                         UnsupportedReason)
 
 SAMPLE_EVENT = {"sample": "event", "extra": {"Test": "123"}}
 

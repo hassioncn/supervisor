@@ -1,7 +1,7 @@
 """Test docker stats."""
-from supervisor.docker.stats import DockerStats
-
 from tests.common import load_json_fixture
+
+from supervisor.docker.stats import DockerStats
 
 
 def test_cpu_presentage(docker):

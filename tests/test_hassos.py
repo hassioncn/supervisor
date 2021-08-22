@@ -1,7 +1,7 @@
 """Test Home Assistant OS functionality."""
 
-from awesomeversion import AwesomeVersion
 import pytest
+from awesomeversion import AwesomeVersion
 
 from supervisor.coresys import CoreSys
 

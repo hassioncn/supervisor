@@ -2,11 +2,10 @@
 from unittest.mock import AsyncMock
 
 import pytest
+from tests.const import TEST_INTERFACE
 
 from supervisor.dbus.network import NetworkManager
 from supervisor.exceptions import HostNotSupportedError
-
-from tests.const import TEST_INTERFACE
 
 # pylint: disable=protected-access
 

@@ -2,17 +2,13 @@
 # pylint: disable=import-error,protected-access
 from pathlib import Path
 
-from supervisor.const import (
-    ATTR_DATE,
-    ATTR_SLUG,
-    ATTR_TYPE,
-    SNAPSHOT_FULL,
-    SNAPSHOT_PARTIAL,
-)
+from supervisor.const import (ATTR_DATE, ATTR_SLUG, ATTR_TYPE, SNAPSHOT_FULL,
+                              SNAPSHOT_PARTIAL)
 from supervisor.coresys import CoreSys
 from supervisor.resolution.const import ContextType, SuggestionType
 from supervisor.resolution.data import Suggestion
-from supervisor.resolution.fixups.clear_full_snapshot import FixupClearFullSnapshot
+from supervisor.resolution.fixups.clear_full_snapshot import \
+    FixupClearFullSnapshot
 from supervisor.snapshots.snapshot import Snapshot
 from supervisor.utils.dt import utcnow
 from supervisor.utils.tar import SecureTarFile

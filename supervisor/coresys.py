@@ -33,12 +33,12 @@ if TYPE_CHECKING:
     from .misc.tasks import Tasks
     from .plugins import PluginManager
     from .resolution.module import ResolutionManager
+    from .security import Security
     from .services import ServiceManager
     from .snapshots import SnapshotManager
     from .store import StoreManager
     from .supervisor import Supervisor
     from .updater import Updater
-    from .security import Security
 
 
 T = TypeVar("T")

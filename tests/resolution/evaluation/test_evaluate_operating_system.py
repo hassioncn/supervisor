@@ -5,9 +5,7 @@ from unittest.mock import MagicMock, patch
 from supervisor.const import CoreState
 from supervisor.coresys import CoreSys
 from supervisor.resolution.evaluations.operating_system import (
-    SUPPORTED_OS,
-    EvaluateOperatingSystem,
-)
+    SUPPORTED_OS, EvaluateOperatingSystem)
 
 
 async def test_evaluation(coresys: CoreSys):

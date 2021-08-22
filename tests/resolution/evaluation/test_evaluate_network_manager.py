@@ -4,7 +4,8 @@ from unittest.mock import patch
 
 from supervisor.const import CoreState
 from supervisor.coresys import CoreSys
-from supervisor.resolution.evaluations.network_manager import EvaluateNetworkManager
+from supervisor.resolution.evaluations.network_manager import \
+    EvaluateNetworkManager
 
 
 async def test_evaluation(coresys: CoreSys):

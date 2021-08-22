@@ -1,6 +1,6 @@
 """Test Store API."""
-from aiohttp.test_utils import TestClient
 import pytest
+from aiohttp.test_utils import TestClient
 
 from supervisor.store.addon import AddonStore
 from supervisor.store.repository import Repository

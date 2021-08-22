@@ -5,10 +5,7 @@ from unittest.mock import patch
 from supervisor.const import CoreState
 from supervisor.coresys import CoreSys
 from supervisor.resolution.evaluations.docker_configuration import (
-    EXPECTED_LOGGING,
-    EXPECTED_STORAGE,
-    EvaluateDockerConfiguration,
-)
+    EXPECTED_LOGGING, EXPECTED_STORAGE, EvaluateDockerConfiguration)
 
 
 async def test_evaluation(coresys: CoreSys):

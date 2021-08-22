@@ -7,7 +7,8 @@ import pytest
 from supervisor.addons import validate as vd
 from supervisor.addons.addon import Addon
 from supervisor.addons.model import Data
-from supervisor.const import SYSTEMD_JOURNAL_PERSISTENT, SYSTEMD_JOURNAL_VOLATILE
+from supervisor.const import (SYSTEMD_JOURNAL_PERSISTENT,
+                              SYSTEMD_JOURNAL_VOLATILE)
 from supervisor.coresys import CoreSys
 from supervisor.docker.addon import DockerAddon
 

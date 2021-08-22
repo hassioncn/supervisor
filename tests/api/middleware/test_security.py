@@ -1,7 +1,7 @@
 """Test API security layer."""
 
-from aiohttp import web
 import pytest
+from aiohttp import web
 
 from supervisor.api import RestAPI
 from supervisor.const import CoreState
