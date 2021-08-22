@@ -2,10 +2,12 @@ name: CI
 
 # yamllint disable-line rule:truthy
 on:
-  push:
-    branches:
-      - main
-  pull_request: ~
+  workflow_dispatch:
+      inputs:
+        name:
+          description: "CIName"
+          required: true
+          default: "Main"
 
 env:
   DEFAULT_PYTHON: 3.9
