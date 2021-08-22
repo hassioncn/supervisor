@@ -4,10 +4,24 @@ from ipaddress import ip_network
 from pathlib import Path
 
 SUPERVISOR_VERSION = "DEV"
+SUPERVISOR_ENV = "CN"
 
-URL_HASSIO_ADDONS = "https://github.com/home-assistant/addons"
-URL_HASSIO_APPARMOR = "https://version.home-assistant.io/apparmor.txt"
-URL_HASSIO_VERSION = "https://version.home-assistant.io/{channel}.json"
+if SUPERVISOR_ENV == "CN":
+    URL_GIT = "https://gitee.com"
+    URL_GIT_ORG_HASSIO = "hassiocn"
+    URL_GIT_ORG_ADDON = "hassiocn-addons"
+    URL_VERSION = "https://gitee.com/hassiocn/version/raw/master/"
+
+else:
+    URL_GIT = "https://github.com"
+    URL_GIT_ORG_HASSIO = "home-assistant"
+    URL_GIT_ORG_ADDON = "hassio-addons"
+    URL_VERSION = "https://version.home-assistant.io"
+
+
+URL_HASSIO_ADDONS = f"{URL_GIT}/{URL_GIT_ORG_HASSIO}/addons"
+URL_HASSIO_APPARMOR = f"{URL_VERSION}/apparmor.txt"
+URL_HASSIO_VERSION = URL_VERSION + "/{channel}.json"
 
 SUPERVISOR_DATA = Path("/data")
 
