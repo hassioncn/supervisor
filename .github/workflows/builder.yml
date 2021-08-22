@@ -6,7 +6,7 @@ on:
       channel:
         description: "Channel"
         required: true
-        default: "dev"
+        default: "stable"
       version:
         description: "Version"
         required: true
@@ -17,20 +17,7 @@ on:
       stable:
         description: "Stable"
         required: true
-        default: "false"
-  pull_request:
-    branches: ["main"]
-  release:
-    types: ["published"]
-  push:
-    branches: ["main"]
-    paths:
-      - "rootfs/**"
-      - "supervisor/**"
-      - build.json
-      - Dockerfile
-      - requirements.txt
-      - setup.py
+        default: "true"
 
 env:
   BUILD_NAME: supervisor
@@ -63,17 +50,6 @@ jobs:
         with:
           type: ${{ env.BUILD_TYPE }}
 
-      - name: Get changed files
-        id: changed_files
-        if: steps.version.outputs.publish == 'false'
-        uses: jitterbit/get-changed-files@v1
-
-      - name: Check if requirements files changed
-        id: requirements
-        run: |
-          if [[ "${{ steps.changed_files.outputs.all }}" =~ (requirements.txt|build.json) ]]; then
-            echo "::set-output name=changed::true"
-          fi
 
   build:
     name: Build ${{ matrix.arch }} supervisor
@@ -88,18 +64,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build wheels
-        if: needs.init.outputs.requirements == 'true'
-        uses: home-assistant/wheels@master
-        with:
-          tag: ${{ env.WHEELS_TAG }}
-          arch: ${{ matrix.arch }}
-          wheels-host: wheels.hass.io
-          wheels-key: ${{ secrets.WHEELS_KEY }}
-          wheels-user: wheels
-          apk: "build-base;libffi-dev;openssl-dev;cargo"
-          skip-binary: aiohttp
-          requirements: "requirements.txt"
 
       - name: Set version
         if: needs.init.outputs.publish == 'true'
@@ -133,65 +97,12 @@ jobs:
             $BUILD_ARGS \
             --${{ matrix.arch }} \
             --target /data \
-            --with-codenotary "${{ secrets.VCN_USER }}" "${{ secrets.VCN_PASSWORD }}" "${{ secrets.VCN_ORG }}" \
-            --validate-from "${{ secrets.VCN_ORG }}" \
             --generic ${{ needs.init.outputs.version }}
-
-  codenotary:
-    name: CodeNotary signature
-    needs: init
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repository
-        if: needs.init.outputs.publish == 'true'
-        uses: actions/checkout@v2.3.4
-        with:
-          fetch-depth: 0
-
-      - name: Set version
-        if: needs.init.outputs.publish == 'true'
-        uses: home-assistant/actions/helpers/version@master
-        with:
-          type: ${{ env.BUILD_TYPE }}
-
-      - name: Signing image
-        if: needs.init.outputs.publish == 'true'
-        uses: home-assistant/actions/helpers/codenotary@master
-        with:
-          source: dir://${{ github.workspace }}
-          user: ${{ secrets.VCN_USER }}
-          password: ${{ secrets.VCN_PASSWORD }}
-          organisation: ${{ secrets.VCN_ORG }}
-
-  version:
-    name: Update version
-    needs: ["init", "run_supervisor"]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repository
-        if: needs.init.outputs.publish == 'true'
-        uses: actions/checkout@v2.3.4
-
-      - name: Initialize git
-        if: needs.init.outputs.publish == 'true'
-        uses: home-assistant/actions/helpers/git-init@master
-        with:
-          name: ${{ secrets.GIT_NAME }}
-          email: ${{ secrets.GIT_EMAIL }}
-          token: ${{ secrets.GIT_TOKEN }}
-
-      - name: Update version file
-        if: needs.init.outputs.publish == 'true'
-        uses: home-assistant/actions/helpers/version-push@master
-        with:
-          key: ${{ env.BUILD_NAME }}
-          version: ${{ needs.init.outputs.version }}
-          channel: ${{ needs.init.outputs.channel }}
 
   run_supervisor:
     runs-on: ubuntu-latest
     name: Run the Supervisor
-    needs: ["build", "codenotary", "init"]
+    needs: ["build", "init"]
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2.3.4
@@ -227,7 +138,7 @@ jobs:
             -e SUPERVISOR_NAME=hassio_supervisor \
             -e SUPERVISOR_DEV=1 \
             -e SUPERVISOR_MACHINE="qemux86-64" \
-          homeassistant/amd64-hassio-supervisor:runner
+          hassiocn/amd64-hassio-supervisor:runner
 
       - name: Start the Supervisor
         run: docker start hassio_supervisor
