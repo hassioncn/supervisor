@@ -7,8 +7,8 @@ setup(
     name="Supervisor",
     version=SUPERVISOR_VERSION,
     license="BSD License",
-    author="The Home Assistant Authors",
-    author_email="hello@home-assistant.io",
+    author="The Home Assistant Authors CN by for5million",
+    author_email="for5million@gmail.com",
     url="https://home-assistant.io/",
     description=("Open-source private cloud os for Home-Assistant" " based on HassOS"),
     long_description=(
@@ -27,7 +27,7 @@ setup(
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3.8",
     ],
-    keywords=["docker", "home-assistant", "api"],
+    keywords=["docker", "home-assistant", "api", "hassiocn"],
     zip_safe=False,
     platforms="any",
     packages=[

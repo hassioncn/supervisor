@@ -11,7 +11,13 @@ import aiohttp
 from aiohttp.client_exceptions import ClientError
 from awesomeversion import AwesomeVersion, AwesomeVersionException
 
-from .const import ATTR_SUPERVISOR_INTERNET, SUPERVISOR_VERSION, URL_HASSIO_APPARMOR
+from .const import (
+    ATTR_SUPERVISOR_INTERNET,
+    SUPERVISOR_VERSION,
+    URL_HASSIO_APPARMOR,
+    URL_HASSIO_VERSION,
+    URL_VERSION,
+)
 from .coresys import CoreSys, CoreSysAttributes
 from .docker.stats import DockerStats
 from .docker.supervisor import DockerSupervisor
@@ -240,9 +246,7 @@ class Supervisor(CoreSysAttributes):
         """Check the connection."""
         timeout = aiohttp.ClientTimeout(total=10)
         try:
-            await self.sys_websession.head(
-                "https://version.home-assistant.io/online.txt", timeout=timeout
-            )
+            await self.sys_websession.head(f"{URL_VERSION}/online.txt", timeout=timeout)
         except (ClientError, asyncio.TimeoutError):
             self.connectivity = False
         else:
