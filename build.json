@@ -1,6 +1,6 @@
 {
   "image": "hassiocn/{arch}-hassio-supervisor",
-  "shadow_repository": "ghcr.io/hassiocn",
+  "shadow_repository": "",
   "build_from": {
     "aarch64": "ghcr.io/home-assistant/aarch64-base-python:3.9-alpine3.13",
     "armhf": "ghcr.io/home-assistant/armhf-base-python:3.9-alpine3.13",
