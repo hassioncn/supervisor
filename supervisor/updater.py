@@ -25,6 +25,7 @@ from .const import (
     ATTR_SUPERVISOR,
     FILE_HASSIO_UPDATER,
     URL_HASSIO_VERSION,
+    VERSION_IMAGE_PATH,
     UpdateChannel,
 )
 from .coresys import CoreSysAttributes
@@ -256,13 +257,19 @@ class Updater(FileConfiguration, CoreSysAttributes):
             self._data[ATTR_MULTICAST] = AwesomeVersion(data["multicast"])
 
             # Update images for that versions
-            self._data[ATTR_IMAGE][ATTR_HOMEASSISTANT] = data["images"]["core"]
-            self._data[ATTR_IMAGE][ATTR_SUPERVISOR] = data["images"]["supervisor"]
-            self._data[ATTR_IMAGE][ATTR_AUDIO] = data["images"]["audio"]
-            self._data[ATTR_IMAGE][ATTR_CLI] = data["images"]["cli"]
-            self._data[ATTR_IMAGE][ATTR_DNS] = data["images"]["dns"]
-            self._data[ATTR_IMAGE][ATTR_OBSERVER] = data["images"]["observer"]
-            self._data[ATTR_IMAGE][ATTR_MULTICAST] = data["images"]["multicast"]
+            self._data[ATTR_IMAGE][ATTR_HOMEASSISTANT] = data[VERSION_IMAGE_PATH][
+                "core"
+            ]
+            self._data[ATTR_IMAGE][ATTR_SUPERVISOR] = data[VERSION_IMAGE_PATH][
+                "supervisor"
+            ]
+            self._data[ATTR_IMAGE][ATTR_AUDIO] = data[VERSION_IMAGE_PATH]["audio"]
+            self._data[ATTR_IMAGE][ATTR_CLI] = data[VERSION_IMAGE_PATH]["cli"]
+            self._data[ATTR_IMAGE][ATTR_DNS] = data[VERSION_IMAGE_PATH]["dns"]
+            self._data[ATTR_IMAGE][ATTR_OBSERVER] = data[VERSION_IMAGE_PATH]["observer"]
+            self._data[ATTR_IMAGE][ATTR_MULTICAST] = data[VERSION_IMAGE_PATH][
+                "multicast"
+            ]
 
         except KeyError as err:
             raise UpdaterError(

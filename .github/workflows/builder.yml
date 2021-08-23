@@ -120,8 +120,8 @@ jobs:
       - name: Pull Supervisor
         if: needs.init.outputs.publish == 'true'
         run: |
-          docker pull homeassistant/amd64-hassio-supervisor:${{ needs.init.outputs.version }}
-          docker tag homeassistant/amd64-hassio-supervisor:${{ needs.init.outputs.version }} homeassistant/amd64-hassio-supervisor:runner
+          docker pull hassiocn/amd64-hassio-supervisor:${{ needs.init.outputs.version }}
+          docker tag hassiocn/amd64-hassio-supervisor:${{ needs.init.outputs.version }} hassiocn/amd64-hassio-supervisor:runner
 
       - name: Create the Supervisor
         run: |
