@@ -10,11 +10,10 @@ if SUPERVISOR_ENV == "CN":
     URL_GIT = "https://gitee.com"
     URL_GIT_ORG_HASSIO = "hassiocn"
     URL_GIT_ORG_ADDON = "hassiocn-addons"
-    URL_VERSION = "https://gitee.com/hassiocn/version/raw/master/"
+    URL_VERSION = "https://gitee.com/hassiocn/version/raw/master"
     DOCKER_PREFIX = ""
     DOCKER_ORG = "hassiocn"
     VERSION_IMAGE_PATH = "image"
-
 else:
     URL_GIT = "https://github.com"
     URL_GIT_ORG_HASSIO = "home-assistant"

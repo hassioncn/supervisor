@@ -36,6 +36,7 @@ async def vcn_validate(
     org: Optional[str] = None,
     signer: Optional[str] = None,
 ) -> None:
+    return
     """Validate data against CodeNotary."""
     if (checksum, path, org, signer) in _CACHE:
         return

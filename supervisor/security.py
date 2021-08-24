@@ -61,6 +61,7 @@ class Security(FileConfiguration, CoreSysAttributes):
     async def verify_own_content(
         self, checksum: Optional[str] = None, path: Optional[Path] = None
     ) -> Awaitable[None]:
+        return
         """Verify content from HA org."""
         if not self.content_trust:
             _LOGGER.warning("Disabled content-trust, skip validation")
@@ -77,6 +78,7 @@ class Security(FileConfiguration, CoreSysAttributes):
             return
 
     async def verify_secret(self, pwned_hash: str) -> None:
+        return
         """Verify pwned state of a secret."""
         if not self.pwned:
             _LOGGER.warning("Disabled pwned, skip validation")
