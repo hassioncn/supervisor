@@ -20,7 +20,7 @@ RUN \
         libffi \
         libpulse \
         musl \
-        openssl \
+        openssl=1.1.1k-r0 \
     && apk add --no-cache --virtual .build-dependencies \
         build-base \
         go \
