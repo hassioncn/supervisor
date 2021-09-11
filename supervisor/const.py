@@ -9,7 +9,7 @@ SUPERVISOR_ENV = "CN"
 if SUPERVISOR_ENV == "CN":
     URL_GIT = "https://gitee.com"
     URL_GIT_ORG_HASSIO = "hassiocn"
-    URL_GIT_ORG_ADDON = "hassiocn-addons"
+    URL_GIT_ADDON = "hassiocn/repository-3"
     URL_VERSION = "https://gitee.com/hassiocn/version/raw/master"
     DOCKER_PREFIX = ""
     DOCKER_ORG = "hassiocn"
@@ -17,7 +17,7 @@ if SUPERVISOR_ENV == "CN":
 else:
     URL_GIT = "https://github.com"
     URL_GIT_ORG_HASSIO = "home-assistant"
-    URL_GIT_ORG_ADDON = "hassio-addons"
+    URL_GIT_ADDON = "hassio-addons/repository"
     URL_VERSION = "https://version.home-assistant.io"
     DOCKER_PREFIX = "ghcr.io/"
     DOCKER_ORG = "home-assistant"

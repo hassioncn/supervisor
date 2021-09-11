@@ -37,7 +37,7 @@ from .const import (
     ATTR_WAIT_BOOT,
     SUPERVISOR_VERSION,
     URL_GIT,
-    URL_GIT_ORG_ADDON,
+    URL_GIT_ADDON,
     LogLevel,
     UpdateChannel,
 )
@@ -146,7 +146,7 @@ SCHEMA_SUPERVISOR_CONFIG = vol.Schema(
         vol.Optional(ATTR_IMAGE): docker_image,
         vol.Optional(
             ATTR_ADDONS_CUSTOM_LIST,
-            default=[f"{URL_GIT}/{URL_GIT_ORG_ADDON}/repository"],
+            default=[f"{URL_GIT}/{URL_GIT_ADDON}"],
         ): repositories,
         vol.Optional(ATTR_WAIT_BOOT, default=5): wait_boot,
         vol.Optional(ATTR_LOGGING, default=LogLevel.INFO): vol.Coerce(LogLevel),
