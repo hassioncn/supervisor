@@ -3,7 +3,7 @@ import asyncio
 from contextlib import suppress
 import logging
 import tarfile
-from typing import Dict, List, Optional, Union
+from typing import Optional, Union
 
 from ..const import AddonBoot, AddonStartup, AddonState
 from ..coresys import CoreSys, CoreSysAttributes
@@ -38,17 +38,17 @@ class AddonManager(CoreSysAttributes):
         """Initialize Docker base wrapper."""
         self.coresys: CoreSys = coresys
         self.data: AddonsData = AddonsData(coresys)
-        self.local: Dict[str, Addon] = {}
-        self.store: Dict[str, AddonStore] = {}
+        self.local: dict[str, Addon] = {}
+        self.store: dict[str, AddonStore] = {}
 
     @property
-    def all(self) -> List[AnyAddon]:
+    def all(self) -> list[AnyAddon]:
         """Return a list of all add-ons."""
-        addons: Dict[str, AnyAddon] = {**self.store, **self.local}
+        addons: dict[str, AnyAddon] = {**self.store, **self.local}
         return list(addons.values())
 
     @property
-    def installed(self) -> List[Addon]:
+    def installed(self) -> list[Addon]:
         """Return a list of all installed add-ons."""
         return list(self.local.values())
 
@@ -89,7 +89,7 @@ class AddonManager(CoreSysAttributes):
 
     async def boot(self, stage: AddonStartup) -> None:
         """Boot add-ons with mode auto."""
-        tasks: List[Addon] = []
+        tasks: list[Addon] = []
         for addon in self.installed:
             if addon.boot != AddonBoot.AUTO or addon.startup != stage:
                 continue
@@ -123,7 +123,7 @@ class AddonManager(CoreSysAttributes):
 
     async def shutdown(self, stage: AddonStartup) -> None:
         """Shutdown addons."""
-        tasks: List[Addon] = []
+        tasks: list[Addon] = []
         for addon in self.installed:
             if addon.state != AddonState.STARTED or addon.startup != stage:
                 continue
@@ -306,22 +306,24 @@ class AddonManager(CoreSysAttributes):
     async def rebuild(self, slug: str) -> None:
         """Perform a rebuild of local build add-on."""
         if slug not in self.local:
-            _LOGGER.error("Add-on %s is not installed", slug)
-            raise AddonsError()
+            raise AddonsError(f"Add-on {slug} is not installed", _LOGGER.error)
         addon = self.local[slug]
 
         if addon.is_detached:
-            _LOGGER.error("Add-on %s is not available inside store", slug)
-            raise AddonsError()
+            raise AddonsError(
+                f"Add-on {slug} is not available inside store", _LOGGER.error
+            )
         store = self.store[slug]
 
         # Check if a rebuild is possible now
         if addon.version != store.version:
-            _LOGGER.error("Version changed, use Update instead Rebuild")
-            raise AddonsError()
+            raise AddonsError(
+                "Version changed, use Update instead Rebuild", _LOGGER.error
+            )
         if not addon.need_build:
-            _LOGGER.error("Can't rebuild a image based add-on")
-            raise AddonsNotSupportedError()
+            raise AddonsNotSupportedError(
+                "Can't rebuild a image based add-on", _LOGGER.error
+            )
 
         # remove docker container but not addon config
         last_state: AddonState = addon.state
@@ -371,7 +373,7 @@ class AddonManager(CoreSysAttributes):
     @Job(conditions=[JobCondition.FREE_SPACE, JobCondition.INTERNET_HOST])
     async def repair(self) -> None:
         """Repair local add-ons."""
-        needs_repair: List[Addon] = []
+        needs_repair: list[Addon] = []
 
         # Evaluate Add-ons to repair
         for addon in self.installed:

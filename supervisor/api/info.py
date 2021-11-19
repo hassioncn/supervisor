@@ -1,6 +1,6 @@
 """Init file for Supervisor info RESTful API."""
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from aiohttp import web
 
@@ -31,12 +31,12 @@ class APIInfo(CoreSysAttributes):
     """Handle RESTful API for info functions."""
 
     @api_process
-    async def info(self, request: web.Request) -> Dict[str, Any]:
+    async def info(self, request: web.Request) -> dict[str, Any]:
         """Show system info."""
         return {
             ATTR_SUPERVISOR: self.sys_supervisor.version,
             ATTR_HOMEASSISTANT: self.sys_homeassistant.version,
-            ATTR_HASSOS: self.sys_hassos.version,
+            ATTR_HASSOS: self.sys_os.version,
             ATTR_DOCKER: self.sys_docker.info.version,
             ATTR_HOSTNAME: self.sys_host.info.hostname,
             ATTR_OPERATING_SYSTEM: self.sys_host.info.operating_system,

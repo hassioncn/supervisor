@@ -41,9 +41,6 @@ async def test_evaluation_setup(coresys: CoreSys):
         "supervisor.resolution.evaluations.operating_system.EvaluateOperatingSystem.evaluate",
         return_value=False,
     ) as operating_system, patch(
-        "supervisor.resolution.evaluations.container.EvaluateContainer.evaluate",
-        return_value=False,
-    ) as container, patch(
         "supervisor.resolution.evaluations.network_manager.EvaluateNetworkManager.evaluate",
         return_value=False,
     ) as network_manager, patch(
@@ -52,7 +49,6 @@ async def test_evaluation_setup(coresys: CoreSys):
     ) as systemd:
         await coresys.resolution.evaluate.evaluate_system()
         operating_system.assert_called_once()
-        container.assert_called_once()
         network_manager.assert_called_once()
         systemd.assert_called_once()
 
@@ -92,12 +88,3 @@ async def test_adding_and_removing_unsupported_reason(coresys: CoreSys):
         await coresys.resolution.evaluate.evaluate_system()
         assert UnsupportedReason.NETWORK_MANAGER not in coresys.resolution.unsupported
         assert coresys.core.supported
-
-
-async def test_set_unhealthy(coresys: CoreSys):
-    """Test setting unhealthy."""
-    assert coresys.core.healthy
-    coresys.resolution.unsupported = UnsupportedReason.CONTAINER
-    await coresys.resolution.evaluate.evaluate_system()
-
-    assert not coresys.core.healthy

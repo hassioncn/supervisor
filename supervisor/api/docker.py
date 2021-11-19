@@ -1,6 +1,6 @@
 """Init file for Supervisor Home Assistant RESTful API."""
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from aiohttp import web
 import voluptuous as vol
@@ -21,7 +21,7 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 
 SCHEMA_DOCKER_REGISTRY = vol.Schema(
     {
-        vol.Coerce(str): {
+        str: {
             vol.Required(ATTR_USERNAME): str,
             vol.Required(ATTR_PASSWORD): str,
         }
@@ -33,7 +33,7 @@ class APIDocker(CoreSysAttributes):
     """Handle RESTful API for Docker configuration."""
 
     @api_process
-    async def registries(self, request) -> Dict[str, Any]:
+    async def registries(self, request) -> dict[str, Any]:
         """Return the list of registries."""
         data_registries = {}
         for hostname, registry in self.sys_docker.config.registries.items():

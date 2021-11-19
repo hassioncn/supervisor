@@ -3,13 +3,14 @@ import asyncio
 from datetime import datetime, timedelta
 from functools import wraps
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any, Optional
 
 import sentry_sdk
 
 from ..const import CoreState
 from ..coresys import CoreSysAttributes
 from ..exceptions import HassioError, JobConditionException, JobException
+from ..host.const import HostFeature
 from ..resolution.const import MINIMUM_FREE_SPACE_THRESHOLD, ContextType, IssueType
 from .const import JobCondition, JobExecutionLimit
 
@@ -22,7 +23,7 @@ class Job(CoreSysAttributes):
     def __init__(
         self,
         name: Optional[str] = None,
-        conditions: Optional[List[JobCondition]] = None,
+        conditions: Optional[list[JobCondition]] = None,
         cleanup: bool = True,
         on_condition: Optional[JobException] = None,
         limit: Optional[JobExecutionLimit] = None,
@@ -46,7 +47,7 @@ class Job(CoreSysAttributes):
         ):
             raise RuntimeError("Using Job without a Throttle period!")
 
-    def _post_init(self, args: Tuple[Any]) -> None:
+    def _post_init(self, args: tuple[Any]) -> None:
         """Runtime init."""
         if self.name is None:
             self.name = str(self._method.__qualname__).lower().replace(".", "_")
@@ -167,9 +168,17 @@ class Job(CoreSysAttributes):
                 f"'{self._method.__qualname__}' blocked from execution, no host internet connection"
             )
 
-        if JobCondition.HAOS in self.conditions and not self.sys_hassos.available:
+        if JobCondition.HAOS in self.conditions and not self.sys_os.available:
             raise JobConditionException(
                 f"'{self._method.__qualname__}' blocked from execution, no Home Assistant OS available"
+            )
+
+        if (
+            JobCondition.OS_AGENT in self.conditions
+            and HostFeature.OS_AGENT not in self.sys_host.features
+        ):
+            raise JobConditionException(
+                f"'{self._method.__qualname__}' blocked from execution, no Home Assistant OS-Agent available"
             )
 
     async def _acquire_exection_limit(self) -> None:

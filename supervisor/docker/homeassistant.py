@@ -1,9 +1,9 @@
 """Init file for Supervisor Docker object."""
 from ipaddress import IPv4Address
 import logging
-from typing import Awaitable, Dict, List, Optional
+from typing import Awaitable, Optional
 
-from awesomeversion import AwesomeVersion, AwesomeVersionCompare
+from awesomeversion import AwesomeVersion, AwesomeVersionCompareException
 import docker
 import requests
 
@@ -51,7 +51,7 @@ class DockerHomeAssistant(DockerInterface):
         return self.sys_docker.network.gateway
 
     @property
-    def cgroups_rules(self) -> List[str]:
+    def cgroups_rules(self) -> list[str]:
         """Return a list of needed cgroups permission."""
         return (
             self.sys_hardware.policy.get_cgroups_rules(PolicyGroup.UART)
@@ -61,7 +61,7 @@ class DockerHomeAssistant(DockerInterface):
         )
 
     @property
-    def volumes(self) -> Dict[str, Dict[str, str]]:
+    def volumes(self) -> dict[str, dict[str, str]]:
         """Return Volumes for the mount."""
         volumes = {
             "/dev": {"bind": "/dev", "mode": "ro"},
@@ -220,7 +220,7 @@ class DockerHomeAssistant(DockerInterface):
         try:
             if version != LANDINGPAGE and version < _VERIFY_TRUST:
                 return
-        except AwesomeVersionCompare:
+        except AwesomeVersionCompareException:
             return
 
         super()._validate_trust(image_id, image, version)

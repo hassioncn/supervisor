@@ -25,12 +25,21 @@ from ..const import (
     CONTENT_TYPE_BINARY,
 )
 from ..coresys import CoreSysAttributes
-from .const import ATTR_DT_SYNCHRONIZED, ATTR_DT_UTC, ATTR_USE_NTP, ATTR_USE_RTC
+from .const import (
+    ATTR_AGENT_VERSION,
+    ATTR_APPARMOR_VERSION,
+    ATTR_BOOT_TIMESTAMP,
+    ATTR_DT_SYNCHRONIZED,
+    ATTR_DT_UTC,
+    ATTR_STARTUP_TIME,
+    ATTR_USE_NTP,
+    ATTR_USE_RTC,
+)
 from .utils import api_process, api_process_raw, api_validate
 
 SERVICE = "service"
 
-SCHEMA_OPTIONS = vol.Schema({vol.Optional(ATTR_HOSTNAME): vol.Coerce(str)})
+SCHEMA_OPTIONS = vol.Schema({vol.Optional(ATTR_HOSTNAME): str})
 
 
 class APIHost(CoreSysAttributes):
@@ -40,6 +49,8 @@ class APIHost(CoreSysAttributes):
     async def info(self, request):
         """Return host information."""
         return {
+            ATTR_AGENT_VERSION: self.sys_dbus.agent.version,
+            ATTR_APPARMOR_VERSION: self.sys_host.apparmor.version,
             ATTR_CHASSIS: self.sys_host.info.chassis,
             ATTR_CPE: self.sys_host.info.cpe,
             ATTR_DEPLOYMENT: self.sys_host.info.deployment,
@@ -56,6 +67,8 @@ class APIHost(CoreSysAttributes):
             ATTR_DT_SYNCHRONIZED: self.sys_host.info.dt_synchronized,
             ATTR_USE_NTP: self.sys_host.info.use_ntp,
             ATTR_USE_RTC: self.sys_host.info.use_rtc,
+            ATTR_STARTUP_TIME: self.sys_host.info.startup_time,
+            ATTR_BOOT_TIMESTAMP: self.sys_host.info.boot_timestamp,
         }
 
     @api_process

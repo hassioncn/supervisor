@@ -1,12 +1,11 @@
 """Evaluation class for operating system."""
-from typing import List
 
 from ...const import CoreState
 from ...coresys import CoreSys
 from ..const import UnsupportedReason
 from .base import EvaluateBase
 
-SUPPORTED_OS = ["Debian GNU/Linux 10 (buster)"]
+SUPPORTED_OS = ["Debian GNU/Linux 10 (buster)", "Debian GNU/Linux 11 (bullseye)"]
 
 
 def setup(coresys: CoreSys) -> EvaluateBase:
@@ -28,12 +27,12 @@ class EvaluateOperatingSystem(EvaluateBase):
         return f"Detected unsupported OS: {self.sys_host.info.operating_system}"
 
     @property
-    def states(self) -> List[CoreState]:
+    def states(self) -> list[CoreState]:
         """Return a list of valid states when this evaluation can run."""
         return [CoreState.SETUP]
 
     async def evaluate(self):
         """Run evaluation."""
-        if self.sys_hassos.available:
+        if self.sys_os.available:
             return False
         return self.sys_host.info.operating_system not in SUPPORTED_OS

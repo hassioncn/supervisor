@@ -1,11 +1,11 @@
 """Init file for Supervisor add-ons."""
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Awaitable, Dict, List, Optional
+from typing import Any, Awaitable, Optional
 
 from awesomeversion import AwesomeVersion, AwesomeVersionException
 
-from supervisor.addons.const import SnapshotAddonMode
+from supervisor.addons.const import AddonBackupMode
 
 from ..const import (
     ATTR_ADVANCED,
@@ -13,6 +13,9 @@ from ..const import (
     ATTR_ARCH,
     ATTR_AUDIO,
     ATTR_AUTH_API,
+    ATTR_BACKUP_EXCLUDE,
+    ATTR_BACKUP_POST,
+    ATTR_BACKUP_PRE,
     ATTR_BOOT,
     ATTR_DESCRIPTON,
     ATTR_DEVICES,
@@ -53,9 +56,6 @@ from ..const import (
     ATTR_SCHEMA,
     ATTR_SERVICES,
     ATTR_SLUG,
-    ATTR_SNAPSHOT_EXCLUDE,
-    ATTR_SNAPSHOT_POST,
-    ATTR_SNAPSHOT_PRE,
     ATTR_STAGE,
     ATTR_STARTUP,
     ATTR_STDIN,
@@ -79,11 +79,11 @@ from ..const import (
 )
 from ..coresys import CoreSys, CoreSysAttributes
 from ..docker.const import Capabilities
-from .const import ATTR_SNAPSHOT
+from .const import ATTR_BACKUP
 from .options import AddonOptions, UiOptions
 from .validate import RE_SERVICE, RE_VOLUME
 
-Data = Dict[str, Any]
+Data = dict[str, Any]
 
 
 class AddonModel(CoreSysAttributes, ABC):
@@ -115,7 +115,7 @@ class AddonModel(CoreSysAttributes, ABC):
         return self._available(self.data)
 
     @property
-    def options(self) -> Dict[str, Any]:
+    def options(self) -> dict[str, Any]:
         """Return options with local changes."""
         return self.data[ATTR_OPTIONS]
 
@@ -140,7 +140,7 @@ class AddonModel(CoreSysAttributes, ABC):
         return self.slug.replace("_", "-")
 
     @property
-    def dns(self) -> List[str]:
+    def dns(self) -> list[str]:
         """Return list of DNS name for that add-on."""
         return []
 
@@ -184,8 +184,7 @@ class AddonModel(CoreSysAttributes, ABC):
             return None
 
         # Return data
-        with readme.open("r") as readme_file:
-            return readme_file.read()
+        return readme.read_text(encoding="utf-8")
 
     @property
     def repository(self) -> str:
@@ -228,7 +227,7 @@ class AddonModel(CoreSysAttributes, ABC):
         return self.data[ATTR_STAGE]
 
     @property
-    def services_role(self) -> Dict[str, str]:
+    def services_role(self) -> dict[str, str]:
         """Return dict of services with rights."""
         services_list = self.data.get(ATTR_SERVICES, [])
 
@@ -241,17 +240,17 @@ class AddonModel(CoreSysAttributes, ABC):
         return services
 
     @property
-    def discovery(self) -> List[str]:
+    def discovery(self) -> list[str]:
         """Return list of discoverable components/platforms."""
         return self.data.get(ATTR_DISCOVERY, [])
 
     @property
-    def ports_description(self) -> Optional[Dict[str, str]]:
+    def ports_description(self) -> Optional[dict[str, str]]:
         """Return descriptions of ports."""
         return self.data.get(ATTR_PORTS_DESCRIPTION)
 
     @property
-    def ports(self) -> Optional[Dict[str, Optional[int]]]:
+    def ports(self) -> Optional[dict[str, Optional[int]]]:
         """Return ports of add-on."""
         return self.data.get(ATTR_PORTS)
 
@@ -311,17 +310,17 @@ class AddonModel(CoreSysAttributes, ABC):
         return self.data[ATTR_HOST_DBUS]
 
     @property
-    def static_devices(self) -> List[Path]:
+    def static_devices(self) -> list[Path]:
         """Return static devices of add-on."""
         return [Path(node) for node in self.data.get(ATTR_DEVICES, [])]
 
     @property
-    def environment(self) -> Optional[Dict[str, str]]:
+    def environment(self) -> Optional[dict[str, str]]:
         """Return environment of add-on."""
         return self.data.get(ATTR_ENVIRONMENT)
 
     @property
-    def privileged(self) -> List[Capabilities]:
+    def privileged(self) -> list[Capabilities]:
         """Return list of privilege."""
         return self.data.get(ATTR_PRIVILEGED, [])
 
@@ -360,24 +359,24 @@ class AddonModel(CoreSysAttributes, ABC):
         return self.data[ATTR_HASSIO_ROLE]
 
     @property
-    def snapshot_exclude(self) -> List[str]:
-        """Return Exclude list for snapshot."""
-        return self.data.get(ATTR_SNAPSHOT_EXCLUDE, [])
+    def backup_exclude(self) -> list[str]:
+        """Return Exclude list for backup."""
+        return self.data.get(ATTR_BACKUP_EXCLUDE, [])
 
     @property
-    def snapshot_pre(self) -> Optional[str]:
-        """Return pre-snapshot command."""
-        return self.data.get(ATTR_SNAPSHOT_PRE)
+    def backup_pre(self) -> Optional[str]:
+        """Return pre-backup command."""
+        return self.data.get(ATTR_BACKUP_PRE)
 
     @property
-    def snapshot_post(self) -> Optional[str]:
-        """Return post-snapshot command."""
-        return self.data.get(ATTR_SNAPSHOT_POST)
+    def backup_post(self) -> Optional[str]:
+        """Return post-backup command."""
+        return self.data.get(ATTR_BACKUP_POST)
 
     @property
-    def snapshot_mode(self) -> SnapshotAddonMode:
-        """Return if snapshot is hot/cold."""
-        return self.data[ATTR_SNAPSHOT]
+    def backup_mode(self) -> AddonBackupMode:
+        """Return if backup is hot/cold."""
+        return self.data[ATTR_BACKUP]
 
     @property
     def default_init(self) -> bool:
@@ -495,12 +494,12 @@ class AddonModel(CoreSysAttributes, ABC):
         return self.path_documentation.exists()
 
     @property
-    def supported_arch(self) -> List[str]:
+    def supported_arch(self) -> list[str]:
         """Return list of supported arch."""
         return self.data[ATTR_ARCH]
 
     @property
-    def supported_machine(self) -> List[str]:
+    def supported_machine(self) -> list[str]:
         """Return list of supported machine."""
         return self.data.get(ATTR_MACHINE, [])
 
@@ -515,7 +514,7 @@ class AddonModel(CoreSysAttributes, ABC):
         return ATTR_IMAGE not in self.data
 
     @property
-    def map_volumes(self) -> Dict[str, str]:
+    def map_volumes(self) -> dict[str, str]:
         """Return a dict of {volume: policy} from add-on."""
         volumes = {}
         for volume in self.data[ATTR_MAP]:
@@ -566,7 +565,7 @@ class AddonModel(CoreSysAttributes, ABC):
         return AddonOptions(self.coresys, raw_schema, self.name, self.slug)
 
     @property
-    def schema_ui(self) -> Optional[List[Dict[any, any]]]:
+    def schema_ui(self) -> Optional[list[dict[any, any]]]:
         """Create a UI schema for add-on options."""
         raw_schema = self.data[ATTR_SCHEMA]
 

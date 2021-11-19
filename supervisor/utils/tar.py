@@ -4,7 +4,7 @@ import logging
 import os
 from pathlib import Path, PurePath
 import tarfile
-from typing import IO, Generator, List, Optional
+from typing import IO, Generator, Optional
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding
@@ -110,7 +110,7 @@ class SecureTarFile:
 
     @property
     def size(self) -> float:
-        """Return snapshot size."""
+        """Return backup size."""
         if not self._name.is_file():
             return 0
         return round(self._name.stat().st_size / 1_048_576, 2)  # calc mbyte
@@ -142,7 +142,7 @@ def secure_path(tar: tarfile.TarFile) -> Generator[tarfile.TarInfo, None, None]:
             yield member
 
 
-def _is_excluded_by_filter(path: PurePath, exclude_list: List[str]) -> bool:
+def _is_excluded_by_filter(path: PurePath, exclude_list: list[str]) -> bool:
     """Filter to filter excludes."""
 
     for exclude in exclude_list:
@@ -157,7 +157,7 @@ def _is_excluded_by_filter(path: PurePath, exclude_list: List[str]) -> bool:
 def atomic_contents_add(
     tar_file: tarfile.TarFile,
     origin_path: Path,
-    excludes: List[str],
+    excludes: list[str],
     arcname: str = ".",
 ) -> None:
     """Append directories and/or files to the TarFile if excludes wont filter."""

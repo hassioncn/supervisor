@@ -10,9 +10,10 @@ import secrets
 import shutil
 import tarfile
 from tempfile import TemporaryDirectory
-from typing import Any, Awaitable, Dict, List, Optional, Set
+from typing import Any, Awaitable, Final, Optional
 
 import aiohttp
+from deepmerge import Merger
 import voluptuous as vol
 from voluptuous.humanize import humanize_error
 
@@ -65,11 +66,11 @@ from ..utils import check_port
 from ..utils.apparmor import adjust_profile
 from ..utils.json import read_json_file, write_json_file
 from ..utils.tar import atomic_contents_add, secure_path
-from .const import SnapshotAddonMode
+from .const import AddonBackupMode
 from .model import AddonModel, Data
 from .options import AddonOptions
 from .utils import remove_data
-from .validate import SCHEMA_ADDON_SNAPSHOT
+from .validate import SCHEMA_ADDON_BACKUP
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -86,6 +87,12 @@ RE_WATCHDOG = re.compile(
 RE_OLD_AUDIO = re.compile(r"\d+,\d+")
 
 WATCHDOG_TIMEOUT = aiohttp.ClientTimeout(total=10)
+
+_OPTIONS_MERGER: Final = Merger(
+    type_strategies=[(dict, ["merge"])],
+    fallback_strategies=["override"],
+    type_conflict_strategies=["override"],
+)
 
 
 class Addon(AddonModel):
@@ -187,17 +194,19 @@ class Addon(AddonModel):
         return self.version != self.latest_version
 
     @property
-    def dns(self) -> List[str]:
+    def dns(self) -> list[str]:
         """Return list of DNS name for that add-on."""
         return [f"{self.hostname}.{DNS_SUFFIX}"]
 
     @property
-    def options(self) -> Dict[str, Any]:
+    def options(self) -> dict[str, Any]:
         """Return options with local changes."""
-        return {**self.data[ATTR_OPTIONS], **self.persist[ATTR_OPTIONS]}
+        return _OPTIONS_MERGER.merge(
+            deepcopy(self.data[ATTR_OPTIONS]), deepcopy(self.persist[ATTR_OPTIONS])
+        )
 
     @options.setter
-    def options(self, value: Optional[Dict[str, Any]]) -> None:
+    def options(self, value: Optional[dict[str, Any]]) -> None:
         """Store user add-on options."""
         self.persist[ATTR_OPTIONS] = {} if value is None else deepcopy(value)
 
@@ -274,12 +283,12 @@ class Addon(AddonModel):
         self.persist[ATTR_PROTECTED] = value
 
     @property
-    def ports(self) -> Optional[Dict[str, Optional[int]]]:
+    def ports(self) -> Optional[dict[str, Optional[int]]]:
         """Return ports of add-on."""
         return self.persist.get(ATTR_NETWORK, super().ports)
 
     @ports.setter
-    def ports(self, value: Optional[Dict[str, Optional[int]]]) -> None:
+    def ports(self, value: Optional[dict[str, Optional[int]]]) -> None:
         """Set custom ports of add-on."""
         if value is None:
             self.persist.pop(ATTR_NETWORK, None)
@@ -425,7 +434,7 @@ class Addon(AddonModel):
         return Path(self.sys_config.path_extern_tmp, f"{self.slug}_pulse")
 
     @property
-    def devices(self) -> Set[Device]:
+    def devices(self) -> set[Device]:
         """Extract devices from add-on options."""
         options_schema = self.schema
         with suppress(vol.Invalid):
@@ -434,7 +443,7 @@ class Addon(AddonModel):
         return options_schema.devices
 
     @property
-    def pwned(self) -> Set[str]:
+    def pwned(self) -> set[str]:
         """Extract pwned data for add-on options."""
         options_schema = self.schema
         with suppress(vol.Invalid):
@@ -530,8 +539,7 @@ class Addon(AddonModel):
 
         # Write pulse config
         try:
-            with self.path_pulse.open("w") as config_file:
-                config_file.write(pulse_config)
+            self.path_pulse.write_text(pulse_config, encoding="utf-8")
         except OSError as err:
             _LOGGER.error(
                 "Add-on %s can't write pulse/client.config: %s", self.slug, err
@@ -671,31 +679,32 @@ class Addon(AddonModel):
         Return a coroutine.
         """
         if not self.with_stdin:
-            _LOGGER.error("Add-on %s does not support writing to stdin!", self.slug)
-            raise AddonsNotSupportedError()
+            raise AddonsNotSupportedError(
+                f"Add-on {self.slug} does not support writing to stdin!", _LOGGER.error
+            )
 
         try:
             return await self.instance.write_stdin(data)
         except DockerError as err:
             raise AddonsError() from err
 
-    async def _snapshot_command(self, command: str) -> None:
+    async def _backup_command(self, command: str) -> None:
         try:
             command_return = await self.instance.run_inside(command)
             if command_return.exit_code != 0:
                 _LOGGER.error(
-                    "Pre-/Post-Snapshot command returned error code: %s",
+                    "Pre-/Post backup command returned error code: %s",
                     command_return.exit_code,
                 )
                 raise AddonsError()
         except DockerError as err:
             _LOGGER.error(
-                "Failed running pre-/post-snapshot command %s: %s", command, err
+                "Failed running pre-/post backup command %s: %s", command, err
             )
             raise AddonsError() from err
 
-    async def snapshot(self, tar_file: tarfile.TarFile) -> None:
-        """Snapshot state of an add-on."""
+    async def backup(self, tar_file: tarfile.TarFile) -> None:
+        """Backup state of an add-on."""
         is_running = await self.is_running()
 
         with TemporaryDirectory(dir=self.sys_config.path_tmp) as temp:
@@ -719,79 +728,83 @@ class Addon(AddonModel):
             try:
                 write_json_file(temp_path.joinpath("addon.json"), data)
             except ConfigurationFileError as err:
-                _LOGGER.error("Can't save meta for %s", self.slug)
-                raise AddonsError() from err
+                raise AddonsError(
+                    f"Can't save meta for {self.slug}", _LOGGER.error
+                ) from err
 
             # Store AppArmor Profile
             if self.sys_host.apparmor.exists(self.slug):
                 profile = temp_path.joinpath("apparmor.txt")
                 try:
-                    self.sys_host.apparmor.backup_profile(self.slug, profile)
+                    await self.sys_host.apparmor.backup_profile(self.slug, profile)
                 except HostAppArmorError as err:
-                    _LOGGER.error("Can't backup AppArmor profile")
-                    raise AddonsError() from err
+                    raise AddonsError(
+                        "Can't backup AppArmor profile", _LOGGER.error
+                    ) from err
 
             # write into tarfile
             def _write_tarfile():
                 """Write tar inside loop."""
-                with tar_file as snapshot:
-                    # Snapshot system
+                with tar_file as backup:
+                    # Backup system
 
-                    snapshot.add(temp, arcname=".")
+                    backup.add(temp, arcname=".")
 
-                    # Snapshot data
+                    # Backup data
                     atomic_contents_add(
-                        snapshot,
+                        backup,
                         self.path_data,
-                        excludes=self.snapshot_exclude,
+                        excludes=self.backup_exclude,
                         arcname="data",
                     )
 
             if (
                 is_running
-                and self.snapshot_mode == SnapshotAddonMode.HOT
-                and self.snapshot_pre is not None
+                and self.backup_mode == AddonBackupMode.HOT
+                and self.backup_pre is not None
             ):
-                await self._snapshot_command(self.snapshot_pre)
-            elif is_running and self.snapshot_mode == SnapshotAddonMode.COLD:
-                _LOGGER.info("Shutdown add-on %s for cold snapshot", self.slug)
+                await self._backup_command(self.backup_pre)
+            elif is_running and self.backup_mode == AddonBackupMode.COLD:
+                _LOGGER.info("Shutdown add-on %s for cold backup", self.slug)
                 await self.instance.stop()
 
             try:
-                _LOGGER.info("Building snapshot for add-on %s", self.slug)
+                _LOGGER.info("Building backup for add-on %s", self.slug)
                 await self.sys_run_in_executor(_write_tarfile)
             except (tarfile.TarError, OSError) as err:
-                _LOGGER.error("Can't write tarfile %s: %s", tar_file, err)
-                raise AddonsError() from err
+                raise AddonsError(
+                    f"Can't write tarfile {tar_file}: {err}", _LOGGER.error
+                ) from err
             finally:
                 if (
                     is_running
-                    and self.snapshot_mode == SnapshotAddonMode.HOT
-                    and self.snapshot_post is not None
+                    and self.backup_mode == AddonBackupMode.HOT
+                    and self.backup_post is not None
                 ):
-                    await self._snapshot_command(self.snapshot_post)
-                elif is_running and self.snapshot_mode is SnapshotAddonMode.COLD:
+                    await self._backup_command(self.backup_post)
+                elif is_running and self.backup_mode is AddonBackupMode.COLD:
                     _LOGGER.info("Starting add-on %s again", self.slug)
                     await self.start()
 
-        _LOGGER.info("Finish snapshot for addon %s", self.slug)
+        _LOGGER.info("Finish backup for addon %s", self.slug)
 
     async def restore(self, tar_file: tarfile.TarFile) -> None:
         """Restore state of an add-on."""
         with TemporaryDirectory(dir=self.sys_config.path_tmp) as temp:
-            # extract snapshot
+            # extract backup
             def _extract_tarfile():
-                """Extract tar snapshot."""
-                with tar_file as snapshot:
-                    snapshot.extractall(path=Path(temp), members=secure_path(snapshot))
+                """Extract tar backup."""
+                with tar_file as backup:
+                    backup.extractall(path=Path(temp), members=secure_path(backup))
 
             try:
                 await self.sys_run_in_executor(_extract_tarfile)
             except tarfile.TarError as err:
-                _LOGGER.error("Can't read tarfile %s: %s", tar_file, err)
-                raise AddonsError() from err
+                raise AddonsError(
+                    f"Can't read tarfile {tar_file}: {err}", _LOGGER.error
+                ) from err
 
-            # Read snapshot data
+            # Read backup data
             try:
                 data = read_json_file(Path(temp, "addon.json"))
             except ConfigurationFileError as err:
@@ -799,10 +812,10 @@ class Addon(AddonModel):
 
             # Validate
             try:
-                data = SCHEMA_ADDON_SNAPSHOT(data)
+                data = SCHEMA_ADDON_BACKUP(data)
             except vol.Invalid as err:
                 _LOGGER.error(
-                    "Can't validate %s, snapshot data: %s",
+                    "Can't validate %s, backup data: %s",
                     self.slug,
                     humanize_error(data, err),
                 )
@@ -810,8 +823,10 @@ class Addon(AddonModel):
 
             # If available
             if not self._available(data[ATTR_SYSTEM]):
-                _LOGGER.error("Add-on %s is not available for this platform", self.slug)
-                raise AddonsNotSupportedError()
+                raise AddonsNotSupportedError(
+                    f"Add-on {self.slug} is not available for this platform",
+                    _LOGGER.error,
+                )
 
             # Restore local add-on information
             _LOGGER.info("Restore config for addon %s", self.slug)
@@ -844,7 +859,11 @@ class Addon(AddonModel):
             # Restore data
             def _restore_data():
                 """Restore data."""
-                shutil.copytree(Path(temp, "data"), self.path_data, symlinks=True)
+                temp_data = Path(temp, "data")
+                if temp_data.is_dir():
+                    shutil.copytree(temp_data, self.path_data, symlinks=True)
+                else:
+                    self.path_data.mkdir()
 
             _LOGGER.info("Restoring data for addon %s", self.slug)
             if self.path_data.is_dir():
@@ -852,8 +871,9 @@ class Addon(AddonModel):
             try:
                 await self.sys_run_in_executor(_restore_data)
             except shutil.Error as err:
-                _LOGGER.error("Can't restore origin data: %s", err)
-                raise AddonsError() from err
+                raise AddonsError(
+                    f"Can't restore origin data: {err}", _LOGGER.error
+                ) from err
 
             # Restore AppArmor
             profile_file = Path(temp, "apparmor.txt")

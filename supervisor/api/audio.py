@@ -1,7 +1,7 @@
 """Init file for Supervisor Audio RESTful API."""
 import asyncio
 import logging
-from typing import Any, Awaitable, Dict
+from typing import Any, Awaitable
 
 from aiohttp import web
 import attr
@@ -56,10 +56,10 @@ SCHEMA_MUTE = vol.Schema(
     }
 )
 
-SCHEMA_DEFAULT = vol.Schema({vol.Required(ATTR_NAME): vol.Coerce(str)})
+SCHEMA_DEFAULT = vol.Schema({vol.Required(ATTR_NAME): str})
 
 SCHEMA_PROFILE = vol.Schema(
-    {vol.Required(ATTR_CARD): vol.Coerce(str), vol.Required(ATTR_NAME): vol.Coerce(str)}
+    {vol.Required(ATTR_CARD): str, vol.Required(ATTR_NAME): str}
 )
 
 
@@ -67,7 +67,7 @@ class APIAudio(CoreSysAttributes):
     """Handle RESTful API for Audio functions."""
 
     @api_process
-    async def info(self, request: web.Request) -> Dict[str, Any]:
+    async def info(self, request: web.Request) -> dict[str, Any]:
         """Return Audio information."""
         return {
             ATTR_VERSION: self.sys_plugins.audio.version,
@@ -89,7 +89,7 @@ class APIAudio(CoreSysAttributes):
         }
 
     @api_process
-    async def stats(self, request: web.Request) -> Dict[str, Any]:
+    async def stats(self, request: web.Request) -> dict[str, Any]:
         """Return resource information."""
         stats = await self.sys_plugins.audio.stats()
 

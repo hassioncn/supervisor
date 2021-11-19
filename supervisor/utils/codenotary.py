@@ -1,11 +1,12 @@
 """Small wrapper for CodeNotary."""
+# pylint:  disable=unreachable
 import asyncio
 import hashlib
 import json
 import logging
 from pathlib import Path
 import shlex
-from typing import Optional, Set, Tuple, Union
+from typing import Optional, Union
 
 import async_timeout
 
@@ -15,7 +16,7 @@ from ..exceptions import CodeNotaryBackendError, CodeNotaryError, CodeNotaryUntr
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
 _VCN_CMD: str = "vcn authenticate --silent --output json"
-_CACHE: Set[Tuple[str, Path, str, str]] = set()
+_CACHE: set[tuple[str, Path, str, str]] = set()
 
 
 _ATTR_ERROR = "error"
@@ -38,6 +39,7 @@ async def vcn_validate(
 ) -> None:
     return
     """Validate data against CodeNotary."""
+    return None
     if (checksum, path, org, signer) in _CACHE:
         return
     command = shlex.split(_VCN_CMD)

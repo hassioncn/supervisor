@@ -2,7 +2,7 @@
 from contextlib import suppress
 from ipaddress import IPv4Address
 import logging
-from typing import List, Optional
+from typing import Optional
 
 import docker
 import requests
@@ -30,9 +30,9 @@ class DockerNetwork:
         return DOCKER_NETWORK
 
     @property
-    def containers(self) -> List[docker.models.containers.Container]:
+    def containers(self) -> list[docker.models.containers.Container]:
         """Return of connected containers from network."""
-        containers: List[docker.models.containers.Container] = []
+        containers: list[docker.models.containers.Container] = []
         for cid, _ in self.network.attrs.get("Containers", {}).items():
             try:
                 containers.append(self.docker.containers.get(cid))
@@ -99,7 +99,7 @@ class DockerNetwork:
     def attach_container(
         self,
         container: docker.models.containers.Container,
-        alias: Optional[List[str]] = None,
+        alias: Optional[list[str]] = None,
         ipv4: Optional[IPv4Address] = None,
     ) -> None:
         """Attach container to Supervisor network.
@@ -122,8 +122,9 @@ class DockerNetwork:
         try:
             self.network.connect(container, aliases=alias, ipv4_address=ipv4_address)
         except docker.errors.APIError as err:
-            _LOGGER.error("Can't link container to hassio-net: %s", err)
-            raise DockerError() from err
+            raise DockerError(
+                f"Can't link container to hassio-net: {err}", _LOGGER.error
+            ) from err
 
     def detach_default_bridge(
         self, container: docker.models.containers.Container
@@ -140,8 +141,9 @@ class DockerNetwork:
             return
 
         except docker.errors.APIError as err:
-            _LOGGER.warning("Can't disconnect container from default: %s", err)
-            raise DockerError() from err
+            raise DockerError(
+                f"Can't disconnect container from default: {err}", _LOGGER.warning
+            ) from err
 
     def stale_cleanup(self, container_name: str):
         """Remove force a container from Network.

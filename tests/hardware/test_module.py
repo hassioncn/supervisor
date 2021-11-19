@@ -25,25 +25,40 @@ def test_device_path_lookup(coresys):
             Path("/dev/ttyACM0"),
             Path("/sys/bus/usb/001"),
             "tty",
+            None,
             [],
             {"ID_VENDOR": "xy"},
+            [],
         ),
         Device(
             "ttyUSB0",
             Path("/dev/ttyUSB0"),
             Path("/sys/bus/usb/000"),
             "tty",
+            None,
             [Path("/dev/ttyS1"), Path("/dev/serial/by-id/xyx")],
             {"ID_VENDOR": "xy"},
+            [],
         ),
-        Device("ttyS0", Path("/dev/ttyS0"), Path("/sys/bus/usb/002"), "tty", [], {}),
+        Device(
+            "ttyS0",
+            Path("/dev/ttyS0"),
+            Path("/sys/bus/usb/002"),
+            "tty",
+            None,
+            [],
+            {},
+            [],
+        ),
         Device(
             "video1",
             Path("/dev/video1"),
             Path("/sys/bus/usb/003"),
             "misc",
+            None,
             [],
             {"ID_VENDOR": "xy"},
+            [],
         ),
     ):
         coresys.hardware.update_device(device)
@@ -66,43 +81,52 @@ def test_device_filter(coresys):
             Path("/dev/ttyACM0"),
             Path("/sys/bus/usb/000"),
             "tty",
+            None,
             [],
             {"ID_VENDOR": "xy"},
+            [],
         ),
         Device(
             "ttyUSB0",
             Path("/dev/ttyUSB0"),
             Path("/sys/bus/usb/001"),
             "tty",
+            None,
             [Path("/dev/ttyS1"), Path("/dev/serial/by-id/xyx")],
             {"ID_VENDOR": "xy"},
+            [],
         ),
-        Device("ttyS0", Path("/dev/ttyS0"), Path("/sys/bus/usb/002"), "tty", [], {}),
+        Device(
+            "ttyS0",
+            Path("/dev/ttyS0"),
+            Path("/sys/bus/usb/002"),
+            "tty",
+            None,
+            [],
+            {},
+            [],
+        ),
         Device(
             "video1",
             Path("/dev/video1"),
             Path("/sys/bus/usb/003"),
             "misc",
+            None,
             [],
             {"ID_VENDOR": "xy"},
+            [],
         ),
     ):
         coresys.hardware.update_device(device)
 
     assert sorted(
-        [device.path for device in coresys.hardware.filter_devices()]
-    ) == sorted([device.path for device in coresys.hardware.devices])
+        device.path for device in coresys.hardware.filter_devices()
+    ) == sorted(device.path for device in coresys.hardware.devices)
     assert sorted(
-        [
-            device.path
-            for device in coresys.hardware.filter_devices(
-                subsystem=UdevSubsystem.SERIAL
-            )
-        ]
+        device.path
+        for device in coresys.hardware.filter_devices(subsystem=UdevSubsystem.SERIAL)
     ) == sorted(
-        [
-            device.path
-            for device in coresys.hardware.devices
-            if device.subsystem == UdevSubsystem.SERIAL
-        ]
+        device.path
+        for device in coresys.hardware.devices
+        if device.subsystem == UdevSubsystem.SERIAL
     )

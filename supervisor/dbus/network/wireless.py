@@ -1,10 +1,10 @@
 """Connection object for Network Manager."""
 from typing import Any, Awaitable, Optional
 
-from ...utils.gdbus import DBus
+from ...utils.dbus import DBus
 from ..const import (
     DBUS_ATTR_ACTIVE_ACCESSPOINT,
-    DBUS_NAME_DEVICE_WIRELESS,
+    DBUS_IFACE_DEVICE_WIRELESS,
     DBUS_NAME_NM,
     DBUS_OBJECT_BASE,
 )
@@ -14,7 +14,10 @@ from .accesspoint import NetworkWirelessAP
 
 
 class NetworkWireless(DBusInterfaceProxy):
-    """NetworkWireless object for Network Manager."""
+    """Wireless object for Network Manager.
+
+    https://developer.gnome.org/NetworkManager/stable/gdbus-org.freedesktop.NetworkManager.Device.Wireless.html
+    """
 
     def __init__(self, object_path: str) -> None:
         """Initialize NetworkConnection object."""
@@ -31,7 +34,7 @@ class NetworkWireless(DBusInterfaceProxy):
     @dbus_connected
     def request_scan(self) -> Awaitable[None]:
         """Request a new AP scan."""
-        return self.dbus.Device.Wireless.RequestScan("[]")
+        return self.dbus.Device.Wireless.RequestScan(("a{sv}", {}))
 
     @dbus_connected
     def get_all_accesspoints(self) -> Awaitable[Any]:
@@ -41,7 +44,7 @@ class NetworkWireless(DBusInterfaceProxy):
     async def connect(self) -> None:
         """Get connection information."""
         self.dbus = await DBus.connect(DBUS_NAME_NM, self.object_path)
-        self.properties = await self.dbus.get_properties(DBUS_NAME_DEVICE_WIRELESS)
+        self.properties = await self.dbus.get_properties(DBUS_IFACE_DEVICE_WIRELESS)
 
         # Get details from current active
         if self.properties[DBUS_ATTR_ACTIVE_ACCESSPOINT] != DBUS_OBJECT_BASE:

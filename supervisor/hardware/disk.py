@@ -4,6 +4,8 @@ from pathlib import Path
 import shutil
 from typing import Union
 
+from supervisor.exceptions import HardwareNotFound
+
 from ..coresys import CoreSys, CoreSysAttributes
 from .const import UdevSubsystem
 from .data import Device
@@ -22,13 +24,29 @@ class HwDisk(CoreSysAttributes):
         """Init hardware object."""
         self.coresys = coresys
 
-    def is_system_partition(self, device: Device) -> bool:
-        """Return true if this is a system disk/partition."""
+    def is_used_by_system(self, device: Device) -> bool:
+        """Return true if this is a system partition."""
         if device.subsystem != UdevSubsystem.DISK:
             return False
 
-        if device.attributes.get("ID_FS_LABEL", "").startswith("hassos"):
+        # Root
+        if device.minor == 0:
+            for child in device.children:
+                try:
+                    device = self.sys_hardware.get_by_path(child)
+                except HardwareNotFound:
+                    continue
+                if device.subsystem == UdevSubsystem.DISK:
+                    if device.attributes.get("ID_FS_LABEL", "").startswith("hassos"):
+                        return True
+            return False
+
+        # Partition
+        if device.minor > 0 and device.attributes.get("ID_FS_LABEL", "").startswith(
+            "hassos"
+        ):
             return True
+
         return False
 
     def get_disk_total_space(self, path: Union[str, Path]) -> float:
@@ -47,7 +65,7 @@ class HwDisk(CoreSysAttributes):
         return round(free / (1024.0 ** 3), 1)
 
     def _get_mountinfo(self, path: str) -> str:
-        mountinfo = _MOUNTINFO.read_text()
+        mountinfo = _MOUNTINFO.read_text(encoding="utf-8")
         for line in mountinfo.splitlines():
             mountinfoarr = line.split()
             if mountinfoarr[4] == path:
@@ -74,7 +92,7 @@ class HwDisk(CoreSysAttributes):
             return None
 
         # JEDEC health status DEVICE_LIFE_TIME_EST_TYP_A/B
-        emmc_life_time = life_time_path.read_text().split()
+        emmc_life_time = life_time_path.read_text(encoding="utf-8").split()
 
         if len(emmc_life_time) < 2:
             return None

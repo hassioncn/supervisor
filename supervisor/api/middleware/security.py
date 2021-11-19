@@ -76,6 +76,7 @@ ADDONS_ROLE_ACCESS = {
     ROLE_BACKUP: re.compile(
         r"^(?:"
         r"|/.+/info"
+        r"|/backups.*"
         r"|/snapshots.*"
         r")$"
     ),
@@ -99,6 +100,7 @@ ADDONS_ROLE_ACCESS = {
         r"|/observer/.+"
         r"|/os/.+"
         r"|/resolution/.+"
+        r"|/backups.*"
         r"|/snapshots.*"
         r"|/store.*"
         r"|/supervisor/.+"
@@ -171,7 +173,7 @@ class SecurityMiddleware(CoreSysAttributes):
 
         # Observer
         if supervisor_token == self.sys_plugins.observer.supervisor_token:
-            if not OBSERVER_CHECK.match(request.url):
+            if not OBSERVER_CHECK.match(request.path):
                 _LOGGER.warning("%s invalid Observer access", request.path)
                 raise HTTPForbidden()
             _LOGGER.debug("%s access from Observer", request.path)

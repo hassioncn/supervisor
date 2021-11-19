@@ -1,7 +1,7 @@
 """Baseclass for system fixup."""
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from ...coresys import CoreSys, CoreSysAttributes
 from ...exceptions import ResolutionFixupError
@@ -53,17 +53,17 @@ class FixupBase(ABC, CoreSysAttributes):
         """Run processing of fixup."""
 
     @property
-    @abstractproperty
+    @abstractmethod
     def suggestion(self) -> SuggestionType:
         """Return a SuggestionType enum."""
 
     @property
-    @abstractproperty
+    @abstractmethod
     def context(self) -> ContextType:
         """Return a ContextType enum."""
 
     @property
-    def issues(self) -> List[IssueType]:
+    def issues(self) -> list[IssueType]:
         """Return a IssueType enum list."""
         return []
 

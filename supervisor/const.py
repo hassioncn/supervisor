@@ -2,6 +2,9 @@
 from enum import Enum
 from ipaddress import ip_network
 from pathlib import Path
+from sys import version_info as systemversion
+
+from aiohttp import __version__ as aiohttpversion
 
 SUPERVISOR_VERSION = "DEV"
 SUPERVISOR_ENV = "CN"
@@ -26,6 +29,7 @@ else:
 URL_HASSIO_ADDONS = f"{URL_GIT}/{URL_GIT_ORG_HASSIO}/addons"
 URL_HASSIO_APPARMOR = f"{URL_VERSION}/apparmor.txt"
 URL_HASSIO_VERSION = URL_VERSION + "/{channel}.json"
+SERVER_SOFTWARE = f"HomeAssistantSupervisor/{SUPERVISOR_VERSION} aiohttp/{aiohttpversion} Python/{systemversion[0]}.{systemversion[1]}"
 
 SUPERVISOR_DATA = Path("/data")
 
@@ -128,6 +132,10 @@ ATTR_AUTH = "auth"
 ATTR_AUTH_API = "auth_api"
 ATTR_AUTO_UPDATE = "auto_update"
 ATTR_AVAILABLE = "available"
+ATTR_BACKUP_EXCLUDE = "backup_exclude"
+ATTR_BACKUP_POST = "backup_post"
+ATTR_BACKUP_PRE = "backup_pre"
+ATTR_BACKUPS = "backups"
 ATTR_BLK_READ = "blk_read"
 ATTR_BLK_WRITE = "blk_write"
 ATTR_BOARD = "board"
@@ -288,13 +296,8 @@ ATTR_SESSION = "session"
 ATTR_SIGNAL = "signal"
 ATTR_SIZE = "size"
 ATTR_SLUG = "slug"
-ATTR_SNAPSHOT_EXCLUDE = "snapshot_exclude"
-ATTR_SNAPSHOT_PRE = "snapshot_pre"
-ATTR_SNAPSHOT_POST = "snapshot_post"
-ATTR_SNAPSHOTS = "snapshots"
 ATTR_SOURCE = "source"
 ATTR_SQUASH = "squash"
-ATTR_SSD = "ssid"
 ATTR_SSID = "ssid"
 ATTR_SSL = "ssl"
 ATTR_STAGE = "stage"
@@ -369,9 +372,6 @@ FOLDER_SHARE = "share"
 FOLDER_ADDONS = "addons/local"
 FOLDER_SSL = "ssl"
 FOLDER_MEDIA = "media"
-
-SNAPSHOT_FULL = "full"
-SNAPSHOT_PARTIAL = "partial"
 
 CRYPTO_AES128 = "aes128"
 
@@ -463,3 +463,10 @@ class HostFeature(str, Enum):
     SERVICES = "services"
     SHUTDOWN = "shutdown"
     TIMEDATE = "timedate"
+
+
+class BusEvent(str, Enum):
+    """Bus event type."""
+
+    HARDWARE_NEW_DEVICE = "hardware_new_device"
+    HARDWARE_REMOVE_DEVICE = "hardware_remove_device"

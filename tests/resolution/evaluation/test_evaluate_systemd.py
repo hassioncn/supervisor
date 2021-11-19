@@ -2,8 +2,9 @@
 # pylint: disable=import-error,protected-access
 from unittest.mock import MagicMock, patch
 
-from supervisor.const import CoreState, HostFeature
+from supervisor.const import CoreState
 from supervisor.coresys import CoreSys
+from supervisor.host.const import HostFeature
 from supervisor.resolution.evaluations.systemd import EvaluateSystemd
 
 
@@ -21,12 +22,14 @@ async def test_evaluation(coresys: CoreSys):
     assert systemd.reason in coresys.resolution.unsupported
 
     coresys.host.features = [
+        HostFeature.HOSTNAME,
         HostFeature.SERVICES,
         HostFeature.SHUTDOWN,
         HostFeature.REBOOT,
+        HostFeature.TIMEDATE,
     ]
     await systemd()
-    assert systemd.reason in coresys.resolution.unsupported
+    assert systemd.reason not in coresys.resolution.unsupported
 
 
 async def test_did_run(coresys: CoreSys):

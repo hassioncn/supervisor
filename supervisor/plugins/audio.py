@@ -7,7 +7,7 @@ from contextlib import suppress
 import logging
 from pathlib import Path, PurePath
 import shutil
-from typing import Awaitable, Optional
+from typing import Optional
 
 from awesomeversion import AwesomeVersion
 import jinja2
@@ -51,11 +51,6 @@ class PluginAudio(PluginBase):
     def latest_version(self) -> Optional[AwesomeVersion]:
         """Return latest version of Audio."""
         return self.sys_updater.version_audio
-
-    @property
-    def in_progress(self) -> bool:
-        """Return True if a task is in progress."""
-        return self.instance.in_progress
 
     async def load(self) -> None:
         """Load Audio setup."""
@@ -130,8 +125,7 @@ class PluginAudio(PluginBase):
         try:
             await self.instance.update(version, image=self.sys_updater.image_audio)
         except DockerError as err:
-            _LOGGER.error("Audio update failed")
-            raise AudioUpdateError() from err
+            raise AudioUpdateError("Audio update failed", _LOGGER.error) from err
         else:
             self.version = version
             self.image = self.sys_updater.image_audio
@@ -150,8 +144,7 @@ class PluginAudio(PluginBase):
         try:
             await self.instance.restart()
         except DockerError as err:
-            _LOGGER.error("Can't start Audio plugin")
-            raise AudioError() from err
+            raise AudioError("Can't start Audio plugin", _LOGGER.error) from err
 
     async def start(self) -> None:
         """Run CoreDNS."""
@@ -159,8 +152,7 @@ class PluginAudio(PluginBase):
         try:
             await self.instance.run()
         except DockerError as err:
-            _LOGGER.error("Can't start Audio plugin")
-            raise AudioError() from err
+            raise AudioError("Can't start Audio plugin", _LOGGER.error) from err
 
     async def stop(self) -> None:
         """Stop CoreDNS."""
@@ -168,15 +160,7 @@ class PluginAudio(PluginBase):
         try:
             await self.instance.stop()
         except DockerError as err:
-            _LOGGER.error("Can't stop Audio plugin")
-            raise AudioError() from err
-
-    def logs(self) -> Awaitable[bytes]:
-        """Get CoreDNS docker logs.
-
-        Return Coroutine.
-        """
-        return self.instance.logs()
+            raise AudioError("Can't stop Audio plugin", _LOGGER.error) from err
 
     async def stats(self) -> DockerStats:
         """Return stats of CoreDNS."""
@@ -184,13 +168,6 @@ class PluginAudio(PluginBase):
             return await self.instance.stats()
         except DockerError as err:
             raise AudioError() from err
-
-    def is_running(self) -> Awaitable[bool]:
-        """Return True if Docker container is running.
-
-        Return a coroutine.
-        """
-        return self.instance.is_running()
 
     async def repair(self) -> None:
         """Repair CoreDNS plugin."""

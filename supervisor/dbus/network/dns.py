@@ -1,7 +1,7 @@
 """D-Bus interface for hostname."""
 from ipaddress import ip_address
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from ...const import (
     ATTR_DOMAINS,
@@ -11,12 +11,12 @@ from ...const import (
     ATTR_VPN,
 )
 from ...exceptions import DBusError, DBusInterfaceError
-from ...utils.gdbus import DBus
+from ...utils.dbus import DBus
 from ..const import (
     DBUS_ATTR_CONFIGURATION,
     DBUS_ATTR_MODE,
     DBUS_ATTR_RCMANAGER,
-    DBUS_NAME_DNS,
+    DBUS_IFACE_DNS,
     DBUS_NAME_NM,
     DBUS_OBJECT_DNS,
 )
@@ -28,13 +28,16 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
 class NetworkManagerDNS(DBusInterface):
-    """Handle D-Bus interface for NMI DnsManager."""
+    """Handle D-Bus interface for NM DnsManager.
+
+    https://developer.gnome.org/NetworkManager/stable/gdbus-org.freedesktop.NetworkManager.DnsManager.html
+    """
 
     def __init__(self) -> None:
         """Initialize Properties."""
         self._mode: Optional[str] = None
         self._rc_manager: Optional[str] = None
-        self._configuration: List[DNSConfiguration] = []
+        self._configuration: list[DNSConfiguration] = []
 
     @property
     def mode(self) -> Optional[str]:
@@ -47,7 +50,7 @@ class NetworkManagerDNS(DBusInterface):
         return self._rc_manager
 
     @property
-    def configuration(self) -> List[DNSConfiguration]:
+    def configuration(self) -> list[DNSConfiguration]:
         """Return Propertie configuraton."""
         return self._configuration
 
@@ -65,7 +68,7 @@ class NetworkManagerDNS(DBusInterface):
     @dbus_connected
     async def update(self):
         """Update Properties."""
-        data = await self.dbus.get_properties(DBUS_NAME_DNS)
+        data = await self.dbus.get_properties(DBUS_IFACE_DNS)
         if not data:
             _LOGGER.warning("Can't get properties for DnsManager")
             return

@@ -1,9 +1,9 @@
 """D-Bus interface for hostname."""
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from ..exceptions import DBusError, DBusInterfaceError
-from ..utils.gdbus import DBus
+from ..utils.dbus import DBus
 from .const import (
     DBUS_ATTR_CHASSIS,
     DBUS_ATTR_DEPLOYMENT,
@@ -11,6 +11,7 @@ from .const import (
     DBUS_ATTR_OPERATING_SYSTEM_PRETTY_NAME,
     DBUS_ATTR_STATIC_HOSTNAME,
     DBUS_ATTR_STATIC_OPERATING_SYSTEM_CPE_NAME,
+    DBUS_IFACE_HOSTNAME,
     DBUS_NAME_HOSTNAME,
     DBUS_OBJECT_HOSTNAME,
 )
@@ -27,7 +28,7 @@ class Hostname(DBusInterface):
 
     def __init__(self):
         """Initialize Properties."""
-        self.properties: Dict[str, Any] = {}
+        self.properties: dict[str, Any] = {}
 
     async def connect(self):
         """Connect to system's D-Bus."""
@@ -87,4 +88,4 @@ class Hostname(DBusInterface):
     @dbus_connected
     async def update(self):
         """Update Properties."""
-        self.properties = await self.dbus.get_properties(DBUS_NAME_HOSTNAME)
+        self.properties = await self.dbus.get_properties(DBUS_IFACE_HOSTNAME)

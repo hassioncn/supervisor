@@ -9,7 +9,7 @@ FILE_CONFIG_RESOLUTION = Path(SUPERVISOR_DATA, "resolution.json")
 SCHEDULED_HEALTHCHECK = 3600
 
 MINIMUM_FREE_SPACE_THRESHOLD = 1
-MINIMUM_FULL_SNAPSHOTS = 2
+MINIMUM_FULL_BACKUPS = 2
 
 
 class ContextType(str, Enum):
@@ -27,19 +27,20 @@ class ContextType(str, Enum):
 class UnsupportedReason(str, Enum):
     """Reasons for unsupported status."""
 
-    CONTAINER = "container"
-    DBUS = "dbus"
     APPARMOR = "apparmor"
+    CONTENT_TRUST = "content_trust"
+    DBUS = "dbus"
     DOCKER_CONFIGURATION = "docker_configuration"
     DOCKER_VERSION = "docker_version"
+    JOB_CONDITIONS = "job_conditions"
     LXC = "lxc"
     NETWORK_MANAGER = "network_manager"
     OS = "os"
+    OS_AGENT = "os_agent"
     PRIVILEGED = "privileged"
-    SYSTEMD = "systemd"
-    JOB_CONDITIONS = "job_conditions"
-    CONTENT_TRUST = "content_trust"
+    SOFTWARE = "software"
     SOURCE_MODS = "source_mods"
+    SYSTEMD = "systemd"
 
 
 class UnhealthyReason(str, Enum):
@@ -66,13 +67,14 @@ class IssueType(str, Enum):
     FATAL_ERROR = "fatal_error"
     DNS_LOOP = "dns_loop"
     PWNED = "pwned"
+    TRUST = "trust"
 
 
 class SuggestionType(str, Enum):
     """Sugestion type."""
 
-    CLEAR_FULL_SNAPSHOT = "clear_full_snapshot"
-    CREATE_FULL_SNAPSHOT = "create_full_snapshot"
+    CLEAR_FULL_BACKUP = "clear_full_backup"
+    CREATE_FULL_BACKUP = "create_full_backup"
     EXECUTE_UPDATE = "execute_update"
     EXECUTE_REPAIR = "execute_repair"
     EXECUTE_RESET = "execute_reset"

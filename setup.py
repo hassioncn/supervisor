@@ -33,8 +33,9 @@ setup(
     packages=[
         "supervisor.addons",
         "supervisor.api",
+        "supervisor.backups",
         "supervisor.dbus.network",
-        "supervisor.dbus.payloads",
+        "supervisor.dbus.network.setting",
         "supervisor.dbus",
         "supervisor.discovery.services",
         "supervisor.discovery",
@@ -50,7 +51,6 @@ setup(
         "supervisor.resolution",
         "supervisor.services.modules",
         "supervisor.services",
-        "supervisor.snapshots",
         "supervisor.store",
         "supervisor.utils",
         "supervisor",

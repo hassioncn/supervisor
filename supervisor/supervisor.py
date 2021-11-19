@@ -148,7 +148,7 @@ class Supervisor(CoreSysAttributes):
         with TemporaryDirectory(dir=self.sys_config.path_tmp) as tmp_dir:
             profile_file = Path(tmp_dir, "apparmor.txt")
             try:
-                profile_file.write_text(data)
+                profile_file.write_text(data, encoding="utf-8")
             except OSError as err:
                 raise SupervisorAppArmorError(
                     f"Can't write temporary profile: {err!s}", _LOGGER.error
@@ -222,6 +222,13 @@ class Supervisor(CoreSysAttributes):
         Return Coroutine.
         """
         return self.instance.logs()
+
+    def check_trust(self) -> Awaitable[None]:
+        """Calculate Supervisor docker content trust.
+
+        Return Coroutine.
+        """
+        return self.instance.check_trust()
 
     async def stats(self) -> DockerStats:
         """Return stats of Supervisor."""

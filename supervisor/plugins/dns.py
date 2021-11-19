@@ -7,7 +7,7 @@ from contextlib import suppress
 from ipaddress import IPv4Address
 import logging
 from pathlib import Path
-from typing import Awaitable, List, Optional
+from typing import Optional
 
 import attr
 from awesomeversion import AwesomeVersion
@@ -43,7 +43,7 @@ class HostEntry:
     """Single entry in hosts."""
 
     ip_address: IPv4Address = attr.ib()
-    names: List[str] = attr.ib()
+    names: list[str] = attr.ib()
 
 
 class PluginDns(PluginBase):
@@ -58,7 +58,7 @@ class PluginDns(PluginBase):
         self.resolv_template: Optional[jinja2.Template] = None
         self.hosts_template: Optional[jinja2.Template] = None
 
-        self._hosts: List[HostEntry] = []
+        self._hosts: list[HostEntry] = []
         self._loop: bool = False
 
     @property
@@ -72,9 +72,9 @@ class PluginDns(PluginBase):
         return Path(self.sys_config.path_dns, "coredns.json")
 
     @property
-    def locals(self) -> List[str]:
+    def locals(self) -> list[str]:
         """Return list of local system DNS servers."""
-        servers: List[str] = []
+        servers: list[str] = []
         for server in [
             f"dns://{server!s}" for server in self.sys_host.network.dns_servers
         ]:
@@ -84,12 +84,12 @@ class PluginDns(PluginBase):
         return servers
 
     @property
-    def servers(self) -> List[str]:
+    def servers(self) -> list[str]:
         """Return list of DNS servers."""
         return self._data[ATTR_SERVERS]
 
     @servers.setter
-    def servers(self, value: List[str]) -> None:
+    def servers(self, value: list[str]) -> None:
         """Return list of DNS servers."""
         self._data[ATTR_SERVERS] = value
 
@@ -97,11 +97,6 @@ class PluginDns(PluginBase):
     def latest_version(self) -> Optional[AwesomeVersion]:
         """Return latest version of CoreDNS."""
         return self.sys_updater.version_dns
-
-    @property
-    def in_progress(self) -> bool:
-        """Return True if a task is in progress."""
-        return self.instance.in_progress
 
     async def load(self) -> None:
         """Load DNS setup."""
@@ -183,8 +178,7 @@ class PluginDns(PluginBase):
         try:
             await self.instance.update(version, image=self.sys_updater.image_dns)
         except DockerError as err:
-            _LOGGER.error("CoreDNS update failed")
-            raise CoreDNSUpdateError() from err
+            raise CoreDNSUpdateError("CoreDNS update failed", _LOGGER.error) from err
         else:
             self.version = version
             self.image = self.sys_updater.image_dns
@@ -204,8 +198,7 @@ class PluginDns(PluginBase):
         try:
             await self.instance.restart()
         except DockerError as err:
-            _LOGGER.error("Can't start CoreDNS plugin")
-            raise CoreDNSError() from err
+            raise CoreDNSError("Can't start CoreDNS plugin", _LOGGER.error) from err
 
     async def start(self) -> None:
         """Run CoreDNS."""
@@ -216,8 +209,7 @@ class PluginDns(PluginBase):
         try:
             await self.instance.run()
         except DockerError as err:
-            _LOGGER.error("Can't start CoreDNS plugin")
-            raise CoreDNSError() from err
+            raise CoreDNSError("Can't start CoreDNS plugin", _LOGGER.error) from err
 
     async def stop(self) -> None:
         """Stop CoreDNS."""
@@ -225,8 +217,7 @@ class PluginDns(PluginBase):
         try:
             await self.instance.stop()
         except DockerError as err:
-            _LOGGER.error("Can't stop CoreDNS plugin")
-            raise CoreDNSError() from err
+            raise CoreDNSError("Can't stop CoreDNS plugin", _LOGGER.error) from err
 
     async def reset(self) -> None:
         """Reset DNS and hosts."""
@@ -264,8 +255,8 @@ class PluginDns(PluginBase):
     def _write_config(self) -> None:
         """Write CoreDNS config."""
         debug: bool = self.sys_config.logging == LogLevel.DEBUG
-        dns_servers: List[str] = []
-        dns_locals: List[str] = []
+        dns_servers: list[str] = []
+        dns_locals: list[str] = []
 
         # Prepare DNS serverlist: Prio 1 Manual, Prio 2 Local, Prio 3 Fallback
         if not self._loop:
@@ -293,8 +284,9 @@ class PluginDns(PluginBase):
                 },
             )
         except ConfigurationFileError as err:
-            _LOGGER.error("Can't update coredns config: %s", err)
-            raise CoreDNSError() from err
+            raise CoreDNSError(
+                f"Can't update coredns config: {err}", _LOGGER.error
+            ) from err
 
     def _init_hosts(self) -> None:
         """Import hosts entry."""
@@ -317,17 +309,16 @@ class PluginDns(PluginBase):
         data = self.hosts_template.render(entries=self._hosts)
 
         try:
-            self.hosts.write_text(data)
+            self.hosts.write_text(data, encoding="utf-8")
         except OSError as err:
-            _LOGGER.error("Can't update hosts: %s", err)
-            raise CoreDNSError() from err
+            raise CoreDNSError(f"Can't update hosts: {err}", _LOGGER.error) from err
 
-    def add_host(self, ipv4: IPv4Address, names: List[str], write: bool = True) -> None:
+    def add_host(self, ipv4: IPv4Address, names: list[str], write: bool = True) -> None:
         """Add a new host entry."""
         if not ipv4 or ipv4 == IPv4Address("0.0.0.0"):
             return
 
-        hostnames: List[str] = []
+        hostnames: list[str] = []
         for name in names:
             hostnames.append(name)
             hostnames.append(f"{name}.{DNS_SUFFIX}")
@@ -360,7 +351,7 @@ class PluginDns(PluginBase):
         if write:
             self.write_hosts()
 
-    def _search_host(self, names: List[str]) -> Optional[HostEntry]:
+    def _search_host(self, names: list[str]) -> Optional[HostEntry]:
         """Search a host entry."""
         for entry in self._hosts:
             for name in names:
@@ -369,33 +360,12 @@ class PluginDns(PluginBase):
                 return entry
         return None
 
-    def logs(self) -> Awaitable[bytes]:
-        """Get CoreDNS docker logs.
-
-        Return Coroutine.
-        """
-        return self.instance.logs()
-
     async def stats(self) -> DockerStats:
         """Return stats of CoreDNS."""
         try:
             return await self.instance.stats()
         except DockerError as err:
             raise CoreDNSError() from err
-
-    def is_running(self) -> Awaitable[bool]:
-        """Return True if Docker container is running.
-
-        Return a coroutine.
-        """
-        return self.instance.is_running()
-
-    def is_failed(self) -> Awaitable[bool]:
-        """Return True if a Docker container is failed state.
-
-        Return a coroutine.
-        """
-        return self.instance.is_failed()
 
     async def repair(self) -> None:
         """Repair CoreDNS plugin."""

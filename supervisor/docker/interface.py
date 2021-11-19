@@ -3,7 +3,7 @@ import asyncio
 from contextlib import suppress
 import logging
 import re
-from typing import Any, Awaitable, Dict, List, Optional
+from typing import Any, Awaitable, Optional
 
 from awesomeversion import AwesomeVersion
 from awesomeversion.strategy import AwesomeVersionStrategy
@@ -44,7 +44,7 @@ class DockerInterface(CoreSysAttributes):
     def __init__(self, coresys: CoreSys):
         """Initialize Docker base wrapper."""
         self.coresys: CoreSys = coresys
-        self._meta: Optional[Dict[str, Any]] = None
+        self._meta: Optional[dict[str, Any]] = None
         self.lock: asyncio.Lock = asyncio.Lock()
 
     @property
@@ -58,21 +58,21 @@ class DockerInterface(CoreSysAttributes):
         return None
 
     @property
-    def meta_config(self) -> Dict[str, Any]:
+    def meta_config(self) -> dict[str, Any]:
         """Return meta data of configuration for container/image."""
         if not self._meta:
             return {}
         return self._meta.get("Config", {})
 
     @property
-    def meta_host(self) -> Dict[str, Any]:
+    def meta_host(self) -> dict[str, Any]:
         """Return meta data of configuration for host."""
         if not self._meta:
             return {}
         return self._meta.get("HostConfig", {})
 
     @property
-    def meta_labels(self) -> Dict[str, str]:
+    def meta_labels(self) -> dict[str, str]:
         """Return meta data of labels for container/image."""
         return self.meta_config.get("Labels") or {}
 
@@ -102,7 +102,7 @@ class DockerInterface(CoreSysAttributes):
         return self.lock.locked()
 
     @property
-    def security_opt(self) -> List[str]:
+    def security_opt(self) -> list[str]:
         """Control security options."""
         # Disable Seccomp / We don't support it official and it
         # causes problems on some types of host systems.
@@ -334,15 +334,15 @@ class DockerInterface(CoreSysAttributes):
         try:
             docker_container = self.sys_docker.containers.get(self.name)
         except (docker.errors.DockerException, requests.RequestException) as err:
-            _LOGGER.error("%s not found for starting up", self.name)
-            raise DockerError() from err
+            raise DockerError(
+                f"{self.name} not found for starting up", _LOGGER.error
+            ) from err
 
         _LOGGER.info("Starting %s", self.name)
         try:
             docker_container.start()
         except (docker.errors.DockerException, requests.RequestException) as err:
-            _LOGGER.error("Can't start %s: %s", self.name, err)
-            raise DockerError() from err
+            raise DockerError(f"Can't start {self.name}: {err}", _LOGGER.error) from err
 
     @process_lock
     def remove(self) -> Awaitable[None]:
@@ -370,8 +370,9 @@ class DockerInterface(CoreSysAttributes):
                 )
 
         except (docker.errors.DockerException, requests.RequestException) as err:
-            _LOGGER.warning("Can't remove image %s: %s", self.image, err)
-            raise DockerError() from err
+            raise DockerError(
+                f"Can't remove image {self.image}: {err}", _LOGGER.warning
+            ) from err
 
         self._meta = None
 
@@ -439,15 +440,17 @@ class DockerInterface(CoreSysAttributes):
         try:
             origin = self.sys_docker.images.get(f"{self.image}:{self.version!s}")
         except (docker.errors.DockerException, requests.RequestException) as err:
-            _LOGGER.warning("Can't find %s for cleanup", self.image)
-            raise DockerError() from err
+            raise DockerError(
+                f"Can't find {self.image} for cleanup", _LOGGER.warning
+            ) from err
 
         # Cleanup Current
         try:
             images_list = self.sys_docker.images.list(name=self.image)
         except (docker.errors.DockerException, requests.RequestException) as err:
-            _LOGGER.warning("Corrupt docker overlayfs found: %s", err)
-            raise DockerError() from err
+            raise DockerError(
+                f"Corrupt docker overlayfs found: {err}", _LOGGER.warning
+            ) from err
 
         for image in images_list:
             if origin.id == image.id:
@@ -464,8 +467,9 @@ class DockerInterface(CoreSysAttributes):
         try:
             images_list = self.sys_docker.images.list(name=old_image)
         except (docker.errors.DockerException, requests.RequestException) as err:
-            _LOGGER.warning("Corrupt docker overlayfs found: %s", err)
-            raise DockerError() from err
+            raise DockerError(
+                f"Corrupt docker overlayfs found: {err}", _LOGGER.warning
+            ) from err
 
         for image in images_list:
             if origin.id == image.id:
@@ -494,8 +498,9 @@ class DockerInterface(CoreSysAttributes):
         try:
             container.restart(timeout=self.timeout)
         except (docker.errors.DockerException, requests.RequestException) as err:
-            _LOGGER.warning("Can't restart %s: %s", self.image, err)
-            raise DockerError() from err
+            raise DockerError(
+                f"Can't restart {self.image}: {err}", _LOGGER.warning
+            ) from err
 
     @process_lock
     def execute_command(self, command: str) -> Awaitable[CommandReturn]:
@@ -523,12 +528,17 @@ class DockerInterface(CoreSysAttributes):
         except (docker.errors.DockerException, requests.RequestException) as err:
             raise DockerError() from err
 
+        # container is not running
+        if docker_container.status != "running":
+            raise DockerError(f"Container {self.name} is not running", _LOGGER.error)
+
         try:
             stats = docker_container.stats(stream=False)
             return DockerStats(stats)
         except (docker.errors.DockerException, requests.RequestException) as err:
-            _LOGGER.error("Can't read stats from %s: %s", self.name, err)
-            raise DockerError() from err
+            raise DockerError(
+                f"Can't read stats from {self.name}: {err}", _LOGGER.error
+            ) from err
 
     def is_failed(self) -> Awaitable[bool]:
         """Return True if Docker is failing state.
@@ -565,7 +575,7 @@ class DockerInterface(CoreSysAttributes):
 
         Need run inside executor.
         """
-        available_version: List[AwesomeVersion] = []
+        available_version: list[AwesomeVersion] = []
         try:
             for image in self.sys_docker.images.list(self.image):
                 for tag in image.tags:
@@ -578,11 +588,13 @@ class DockerInterface(CoreSysAttributes):
                 raise ValueError()
 
         except (docker.errors.DockerException, ValueError) as err:
-            _LOGGER.info("No version found for %s", self.image)
-            raise DockerNotFound() from err
+            raise DockerNotFound(
+                f"No version found for {self.image}", _LOGGER.info
+            ) from err
         except requests.RequestException as err:
-            _LOGGER.warning("Communication issues with dockerd on Host: %s", err)
-            raise DockerRequestError() from err
+            raise DockerRequestError(
+                f"Communication issues with dockerd on Host: {err}", _LOGGER.warning
+            ) from err
         else:
             _LOGGER.info("Found %s versions: %s", self.image, available_version)
 
@@ -624,3 +636,17 @@ class DockerInterface(CoreSysAttributes):
             self.sys_security.verify_own_content(checksum=checksum), self.sys_loop
         )
         job.result(timeout=20)
+
+    @process_lock
+    def check_trust(self) -> Awaitable[None]:
+        """Check trust of exists Docker image."""
+        return self.sys_run_in_executor(self._check_trust)
+
+    def _check_trust(self) -> None:
+        """Check trust of current image."""
+        try:
+            image = self.sys_docker.images.get(f"{self.image}:{self.version!s}")
+        except (docker.errors.DockerException, requests.RequestException):
+            return
+
+        self._validate_trust(image.id, self.image, self.version)

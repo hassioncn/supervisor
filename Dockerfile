@@ -6,7 +6,6 @@ ENV \
     SUPERVISOR_API=http://localhost
 
 ARG BUILD_ARCH
-ARG VCN_VERSION
 WORKDIR /usr/src
 
 # Install base
@@ -16,10 +15,10 @@ RUN \
         eudev \
         eudev-libs \
         git \
-        glib \
         libffi \
         libpulse \
         musl \
+<<<<<<< HEAD
         openssl\
     && apk add --no-cache --virtual .build-dependencies \
         build-base \
@@ -51,6 +50,9 @@ RUN \
     \
     && apk del .build-dependencies \
     && rm -rf /usr/src/vcn
+=======
+        openssl
+>>>>>>> da246dc40ad45bef09719741d48fd82f8073b760
 
 # Install requirements
 COPY requirements.txt .

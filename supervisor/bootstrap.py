@@ -2,7 +2,6 @@
 import logging
 import os
 from pathlib import Path
-import shutil
 import signal
 
 from colorlog import ColoredFormatter
@@ -20,6 +19,8 @@ from .addons import AddonManager
 from .api import RestAPI
 from .arch import CpuArch
 from .auth import Auth
+from .backups.manager import BackupManager
+from .bus import Bus
 from .const import (
     ENV_HOMEASSISTANT_REPOSITORY,
     ENV_SUPERVISOR_MACHINE,
@@ -33,21 +34,20 @@ from .const import (
 )
 from .core import Core
 from .coresys import CoreSys
-from .dbus import DBusManager
+from .dbus.manager import DBusManager
 from .discovery import Discovery
-from .hardware.module import HardwareManager
-from .hassos import HassOS
+from .hardware.manager import HardwareManager
 from .homeassistant.module import HomeAssistant
-from .host import HostManager
+from .host.manager import HostManager
 from .ingress import Ingress
 from .misc.filter import filter_data
 from .misc.scheduler import Scheduler
 from .misc.tasks import Tasks
-from .plugins import PluginManager
+from .os.manager import OSManager
+from .plugins.manager import PluginManager
 from .resolution.module import ResolutionManager
 from .security import Security
 from .services import ServiceManager
-from .snapshots import SnapshotManager
 from .store import StoreManager
 from .supervisor import Supervisor
 from .updater import Updater
@@ -71,7 +71,7 @@ async def initialize_coresys() -> CoreSys:
     coresys.supervisor = Supervisor(coresys)
     coresys.homeassistant = HomeAssistant(coresys)
     coresys.addons = AddonManager(coresys)
-    coresys.snapshots = SnapshotManager(coresys)
+    coresys.backups = BackupManager(coresys)
     coresys.host = HostManager(coresys)
     coresys.hardware = HardwareManager(coresys)
     coresys.ingress = Ingress(coresys)
@@ -80,9 +80,10 @@ async def initialize_coresys() -> CoreSys:
     coresys.store = StoreManager(coresys)
     coresys.discovery = Discovery(coresys)
     coresys.dbus = DBusManager(coresys)
-    coresys.hassos = HassOS(coresys)
+    coresys.os = OSManager(coresys)
     coresys.scheduler = Scheduler(coresys)
     coresys.security = Security(coresys)
+    coresys.bus = Bus(coresys)
 
     # diagnostics
     setup_diagnostics(coresys)
@@ -92,7 +93,7 @@ async def initialize_coresys() -> CoreSys:
 
     # Set Machine/Host ID
     if MACHINE_ID.exists():
-        coresys.machine_id = MACHINE_ID.read_text().strip()
+        coresys.machine_id = MACHINE_ID.read_text(encoding="utf-8").strip()
 
     # Check if ENV is in development mode
     if coresys.dev:
@@ -173,12 +174,19 @@ def initialize_system(coresys: CoreSys) -> None:
         _LOGGER.debug("Creating Supervisor share folder at '%s'", config.path_share)
         config.path_share.mkdir()
 
-    # Apparmor folder
+    # Apparmor folders
     if not config.path_apparmor.is_dir():
         _LOGGER.debug(
-            "Creating Supervisor Apparmor folder at '%s'", config.path_apparmor
+            "Creating Supervisor Apparmor Profile folder at '%s'", config.path_apparmor
         )
         config.path_apparmor.mkdir()
+
+    if not config.path_apparmor_cache.is_dir():
+        _LOGGER.debug(
+            "Creating Supervisor Apparmor Cache folder at '%s'",
+            config.path_apparmor_cache,
+        )
+        config.path_apparmor_cache.mkdir()
 
     # DNS folder
     if not config.path_dns.is_dir():
@@ -255,10 +263,6 @@ def check_environment() -> None:
     # check docker socket
     if not SOCKET_DOCKER.is_socket():
         _LOGGER.critical("Can't find Docker socket!")
-
-    # check socat exec
-    if not shutil.which("gdbus"):
-        _LOGGER.critical("Can't find gdbus!")
 
 
 def reg_signal(loop, coresys: CoreSys) -> None:

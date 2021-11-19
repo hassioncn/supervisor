@@ -3,7 +3,7 @@ import asyncio
 from contextlib import asynccontextmanager, suppress
 from datetime import datetime, timedelta
 import logging
-from typing import Any, AsyncContextManager, Dict, Optional
+from typing import Any, AsyncContextManager, Optional
 
 import aiohttp
 from aiohttp import hdrs
@@ -49,8 +49,9 @@ class HomeAssistantAPI(CoreSysAttributes):
                 ssl=False,
             ) as resp:
                 if resp.status != 200:
-                    _LOGGER.error("Can't update Home Assistant access token!")
-                    raise HomeAssistantAuthError()
+                    raise HomeAssistantAuthError(
+                        "Can't update Home Assistant access token!", _LOGGER.error
+                    )
 
                 _LOGGER.info("Updated Home Assistant API token")
                 tokens = await resp.json()
@@ -64,12 +65,12 @@ class HomeAssistantAPI(CoreSysAttributes):
         self,
         method: str,
         path: str,
-        json: Optional[Dict[str, Any]] = None,
+        json: Optional[dict[str, Any]] = None,
         content_type: Optional[str] = None,
         data: Any = None,
         timeout: int = 30,
-        params: Optional[Dict[str, str]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: Optional[dict[str, str]] = None,
+        headers: Optional[dict[str, str]] = None,
     ) -> AsyncContextManager[aiohttp.ClientResponse]:
         """Async context manager to make a request with right auth."""
         url = f"{self.sys_homeassistant.api_url}/{path}"
@@ -105,6 +106,15 @@ class HomeAssistantAPI(CoreSysAttributes):
 
         raise HomeAssistantAPIError()
 
+    async def get_config(self) -> dict[str, Any]:
+        """Return Home Assistant config."""
+        async with self.make_request("get", "api/config") as resp:
+            if resp.status in (200, 201):
+                return await resp.json()
+            else:
+                _LOGGER.debug("Home Assistant API return: %d", resp.status)
+        raise HomeAssistantAPIError()
+
     async def check_api_state(self) -> bool:
         """Return True if Home Assistant up and running."""
         # Skip check on landingpage
@@ -124,12 +134,8 @@ class HomeAssistantAPI(CoreSysAttributes):
 
         # Check if API is up
         with suppress(HomeAssistantAPIError):
-            async with self.make_request("get", "api/config") as resp:
-                if resp.status in (200, 201):
-                    data = await resp.json()
-                    if data.get("state", "RUNNING") == "RUNNING":
-                        return True
-                else:
-                    _LOGGER.debug("Home Assistant API return: %d", resp.status)
-
+            data = await self.get_config()
+            # Older versions of home assistant does not expose the state
+            if data and data.get("state", "RUNNING") == "RUNNING":
+                return True
         return False

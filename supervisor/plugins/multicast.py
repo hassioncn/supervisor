@@ -5,7 +5,7 @@ Code: https://github.com/home-assistant/plugin-multicast
 import asyncio
 from contextlib import suppress
 import logging
-from typing import Awaitable, Optional
+from typing import Optional
 
 from awesomeversion import AwesomeVersion
 
@@ -34,11 +34,6 @@ class PluginMulticast(PluginBase):
     def latest_version(self) -> Optional[AwesomeVersion]:
         """Return latest version of Multicast."""
         return self.sys_updater.version_multicast
-
-    @property
-    def in_progress(self) -> bool:
-        """Return True if a task is in progress."""
-        return self.instance.in_progress
 
     async def load(self) -> None:
         """Load multicast setup."""
@@ -102,8 +97,9 @@ class PluginMulticast(PluginBase):
         try:
             await self.instance.update(version, image=self.sys_updater.image_multicast)
         except DockerError as err:
-            _LOGGER.error("Multicast update failed")
-            raise MulticastUpdateError() from err
+            raise MulticastUpdateError(
+                "Multicast update failed", _LOGGER.error
+            ) from err
         else:
             self.version = version
             self.image = self.sys_updater.image_multicast
@@ -122,8 +118,7 @@ class PluginMulticast(PluginBase):
         try:
             await self.instance.restart()
         except DockerError as err:
-            _LOGGER.error("Can't start Multicast plugin")
-            raise MulticastError() from err
+            raise MulticastError("Can't start Multicast plugin", _LOGGER.error) from err
 
     async def start(self) -> None:
         """Run Multicast."""
@@ -131,8 +126,7 @@ class PluginMulticast(PluginBase):
         try:
             await self.instance.run()
         except DockerError as err:
-            _LOGGER.error("Can't start Multicast plugin")
-            raise MulticastError() from err
+            raise MulticastError("Can't start Multicast plugin", _LOGGER.error) from err
 
     async def stop(self) -> None:
         """Stop Multicast."""
@@ -140,15 +134,7 @@ class PluginMulticast(PluginBase):
         try:
             await self.instance.stop()
         except DockerError as err:
-            _LOGGER.error("Can't stop Multicast plugin")
-            raise MulticastError() from err
-
-    def logs(self) -> Awaitable[bytes]:
-        """Get Multicast docker logs.
-
-        Return Coroutine.
-        """
-        return self.instance.logs()
+            raise MulticastError("Can't stop Multicast plugin", _LOGGER.error) from err
 
     async def stats(self) -> DockerStats:
         """Return stats of Multicast."""
@@ -156,20 +142,6 @@ class PluginMulticast(PluginBase):
             return await self.instance.stats()
         except DockerError as err:
             raise MulticastError() from err
-
-    def is_running(self) -> Awaitable[bool]:
-        """Return True if Docker container is running.
-
-        Return a coroutine.
-        """
-        return self.instance.is_running()
-
-    def is_failed(self) -> Awaitable[bool]:
-        """Return True if a Docker container is failed state.
-
-        Return a coroutine.
-        """
-        return self.instance.is_failed()
 
     async def repair(self) -> None:
         """Repair Multicast plugin."""

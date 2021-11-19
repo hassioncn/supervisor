@@ -3,7 +3,7 @@ import asyncio
 from contextlib import suppress
 from datetime import timedelta
 import logging
-from typing import Awaitable, List, Optional
+from typing import Awaitable, Optional
 
 import async_timeout
 
@@ -55,7 +55,7 @@ class Core(CoreSysAttributes):
         if self._state == new_state:
             return
         try:
-            RUN_SUPERVISOR_STATE.write_text(new_state.value)
+            RUN_SUPERVISOR_STATE.write_text(new_state.value, encoding="utf-8")
         except OSError as err:
             _LOGGER.warning(
                 "Can't update the Supervisor state to %s: %s", new_state, err
@@ -105,7 +105,7 @@ class Core(CoreSysAttributes):
         await self.sys_supervisor.check_connectivity()
 
         # Order can be important!
-        setup_loads: List[Awaitable[None]] = [
+        setup_loads: list[Awaitable[None]] = [
             # rest api views
             self.sys_api.load(),
             # Load Host Hardware
@@ -125,13 +125,13 @@ class Core(CoreSysAttributes):
             # Load CPU/Arch
             self.sys_arch.load(),
             # Load HassOS
-            self.sys_hassos.load(),
+            self.sys_os.load(),
             # Load Stores
             self.sys_store.load(),
             # Load Add-ons
             self.sys_addons.load(),
             # load last available data
-            self.sys_snapshots.load(),
+            self.sys_backups.load(),
             # load services
             self.sys_services.load(),
             # Load discovery
@@ -153,6 +153,12 @@ class Core(CoreSysAttributes):
                 self.sys_resolution.unhealthy = UnhealthyReason.SETUP
                 self.sys_capture_exception(err)
 
+        # Set OS Agent diagnostics if needed
+        if self.sys_config.diagnostics is not None and (
+            self.sys_dbus.agent.diagnostics != self.sys_config.diagnostics
+        ):
+            self.sys_dbus.agent.diagnostics = self.sys_config.diagnostics
+
         # Evaluate the system
         await self.sys_resolution.evaluate.evaluate_system()
 
@@ -169,7 +175,7 @@ class Core(CoreSysAttributes):
             )
 
         # Mark booted partition as healthy
-        await self.sys_hassos.mark_healthy()
+        await self.sys_os.mark_healthy()
 
         # On release channel, try update itself
         if self.sys_supervisor.need_update:

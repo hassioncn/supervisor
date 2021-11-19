@@ -3,7 +3,7 @@ from datetime import datetime
 import logging
 import os
 from pathlib import Path, PurePath
-from typing import List, Optional
+from typing import Optional
 
 from awesomeversion import AwesomeVersion
 
@@ -42,6 +42,7 @@ BACKUP_DATA = PurePath("backup")
 SHARE_DATA = PurePath("share")
 TMP_DATA = PurePath("tmp")
 APPARMOR_DATA = PurePath("apparmor")
+APPARMOR_CACHE = PurePath("apparmor/cache")
 DNS_DATA = PurePath("dns")
 AUDIO_DATA = PurePath("audio")
 MEDIA_DATA = PurePath("media")
@@ -269,6 +270,21 @@ class CoreConfig(FileConfiguration):
         return Path(SUPERVISOR_DATA, APPARMOR_DATA)
 
     @property
+    def path_apparmor_cache(self) -> Path:
+        """Return root Apparmor cache folder."""
+        return Path(SUPERVISOR_DATA, APPARMOR_CACHE)
+
+    @property
+    def path_extern_apparmor(self) -> Path:
+        """Return root Apparmor profile folder external."""
+        return Path(self.path_extern_supervisor, APPARMOR_DATA)
+
+    @property
+    def path_extern_apparmor_cache(self) -> Path:
+        """Return root Apparmor cache folder external."""
+        return Path(self.path_extern_supervisor, APPARMOR_CACHE)
+
+    @property
     def path_extern_share(self) -> PurePath:
         """Return root share data folder external for Docker."""
         return PurePath(self.path_extern_supervisor, SHARE_DATA)
@@ -294,7 +310,7 @@ class CoreConfig(FileConfiguration):
         return PurePath(self.path_extern_supervisor, MEDIA_DATA)
 
     @property
-    def addons_repositories(self) -> List[str]:
+    def addons_repositories(self) -> list[str]:
         """Return list of custom Add-on repositories."""
         return self._data[ATTR_ADDONS_CUSTOM_LIST]
 

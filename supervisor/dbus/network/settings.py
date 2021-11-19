@@ -3,7 +3,7 @@ import logging
 from typing import Any, Awaitable
 
 from ...exceptions import DBusError, DBusInterfaceError
-from ...utils.gdbus import DBus
+from ...utils.dbus import DBus
 from ..const import DBUS_NAME_NM, DBUS_OBJECT_SETTINGS
 from ..interface import DBusInterface
 from ..utils import dbus_connected
@@ -12,7 +12,10 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
 class NetworkManagerSettings(DBusInterface):
-    """Handle D-Bus interface for Network Manager."""
+    """Handle D-Bus interface for Network Manager Connection Settings Profile Manager.
+
+    https://developer.gnome.org/NetworkManager/stable/gdbus-org.freedesktop.NetworkManager.Settings.html
+    """
 
     async def connect(self) -> None:
         """Connect to system's D-Bus."""
@@ -26,9 +29,9 @@ class NetworkManagerSettings(DBusInterface):
             )
 
     @dbus_connected
-    def add_connection(self, settings: str) -> Awaitable[Any]:
+    def add_connection(self, settings: Any) -> Awaitable[Any]:
         """Add new connection."""
-        return self.dbus.Settings.AddConnection(settings)
+        return self.dbus.Settings.AddConnection(("a{sa{sv}}", settings))
 
     @dbus_connected
     def reload_connections(self) -> Awaitable[Any]:

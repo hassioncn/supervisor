@@ -1,6 +1,6 @@
 """Provide the MySQL Service."""
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 import voluptuous as vol
 
@@ -24,16 +24,14 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 # pylint: disable=no-value-for-parameter
 SCHEMA_SERVICE_MYSQL = vol.Schema(
     {
-        vol.Required(ATTR_HOST): vol.Coerce(str),
+        vol.Required(ATTR_HOST): str,
         vol.Required(ATTR_PORT): network_port,
-        vol.Optional(ATTR_USERNAME): vol.Coerce(str),
-        vol.Optional(ATTR_PASSWORD): vol.Coerce(str),
+        vol.Optional(ATTR_USERNAME): str,
+        vol.Optional(ATTR_PASSWORD): str,
     }
 )
 
-SCHEMA_CONFIG_MYSQL = SCHEMA_SERVICE_MYSQL.extend(
-    {vol.Required(ATTR_ADDON): vol.Coerce(str)}
-)
+SCHEMA_CONFIG_MYSQL = SCHEMA_SERVICE_MYSQL.extend({vol.Required(ATTR_ADDON): str})
 
 
 class MySQLService(ServiceInterface):
@@ -45,7 +43,7 @@ class MySQLService(ServiceInterface):
         return SERVICE_MYSQL
 
     @property
-    def _data(self) -> Dict[str, Any]:
+    def _data(self) -> dict[str, Any]:
         """Return data of this service."""
         return self.sys_services.data.mysql
 
@@ -55,20 +53,19 @@ class MySQLService(ServiceInterface):
         return SCHEMA_SERVICE_MYSQL
 
     @property
-    def active(self) -> List[str]:
+    def active(self) -> list[str]:
         """Return list of addon slug they have enable that."""
         if not self.enabled:
             return []
         return [self._data[ATTR_ADDON]]
 
-    def set_service_data(self, addon: Addon, data: Dict[str, Any]) -> None:
+    def set_service_data(self, addon: Addon, data: dict[str, Any]) -> None:
         """Write the data into service object."""
         if self.enabled:
-            _LOGGER.error(
-                "There is already a MySQL service in use from %s",
-                self._data[ATTR_ADDON],
+            raise ServicesError(
+                f"There is already a MySQL service in use from {self._data[ATTR_ADDON]}",
+                _LOGGER.error,
             )
-            raise ServicesError()
 
         self._data.update(data)
         self._data[ATTR_ADDON] = addon.slug
@@ -79,8 +76,7 @@ class MySQLService(ServiceInterface):
     def del_service_data(self, addon: Addon) -> None:
         """Remove the data from service object."""
         if not self.enabled:
-            _LOGGER.warning("Can't remove not exists services")
-            raise ServicesError()
+            raise ServicesError("Can't remove not exists services", _LOGGER.warning)
 
         self._data.clear()
         self.save()

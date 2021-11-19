@@ -1,17 +1,18 @@
 """Interface to systemd-timedate over D-Bus."""
 from datetime import datetime
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from ..exceptions import DBusError, DBusInterfaceError
+from ..utils.dbus import DBus
 from ..utils.dt import utc_from_timestamp
-from ..utils.gdbus import DBus
 from .const import (
     DBUS_ATTR_LOCALRTC,
     DBUS_ATTR_NTP,
     DBUS_ATTR_NTPSYNCHRONIZED,
     DBUS_ATTR_TIMEUSEC,
     DBUS_ATTR_TIMEZONE,
+    DBUS_IFACE_TIMEDATE,
     DBUS_NAME_TIMEDATE,
     DBUS_OBJECT_TIMEDATE,
 )
@@ -28,7 +29,7 @@ class TimeDate(DBusInterface):
 
     def __init__(self) -> None:
         """Initialize Properties."""
-        self.properties: Dict[str, Any] = {}
+        self.properties: dict[str, Any] = {}
 
     @property
     @dbus_property
@@ -90,4 +91,4 @@ class TimeDate(DBusInterface):
     @dbus_connected
     async def update(self):
         """Update Properties."""
-        self.properties = await self.dbus.get_properties(DBUS_NAME_TIMEDATE)
+        self.properties = await self.dbus.get_properties(DBUS_IFACE_TIMEDATE)

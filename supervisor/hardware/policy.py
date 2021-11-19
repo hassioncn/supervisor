@@ -1,6 +1,5 @@
 """Policy / cgroups management of local host."""
 import logging
-from typing import Dict, List
 
 from ..coresys import CoreSys, CoreSysAttributes
 from .const import PolicyGroup, UdevSubsystem
@@ -12,7 +11,7 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 # fmt: off
 # https://www.kernel.org/doc/Documentation/admin-guide/devices.txt
 
-_CGROUPS: Dict[PolicyGroup, List[int]] = {
+_CGROUPS: dict[PolicyGroup, list[int]] = {
     PolicyGroup.UART: [
         204,  # ttyAMA / ttySAC (tty)
         188,  # ttyUSB (tty)
@@ -37,7 +36,7 @@ _CGROUPS: Dict[PolicyGroup, List[int]] = {
     ]
 }
 
-_CGROUPS_DYNAMIC_MAJOR: Dict[PolicyGroup, List[UdevSubsystem]] = {
+_CGROUPS_DYNAMIC_MAJOR: dict[PolicyGroup, list[UdevSubsystem]] = {
     PolicyGroup.USB: [
         UdevSubsystem.HIDRAW
     ],
@@ -54,7 +53,7 @@ _CGROUPS_DYNAMIC_MAJOR: Dict[PolicyGroup, List[UdevSubsystem]] = {
     ]
 }
 
-_CGROUPS_DYNAMIC_MINOR: Dict[PolicyGroup, List[UdevSubsystem]] = {
+_CGROUPS_DYNAMIC_MINOR: dict[PolicyGroup, list[UdevSubsystem]] = {
     PolicyGroup.UART: [
         UdevSubsystem.SERIAL
     ]
@@ -72,19 +71,19 @@ class HwPolicy(CoreSysAttributes):
 
     def is_match_cgroup(self, group: PolicyGroup, device: Device) -> bool:
         """Return true if device is in cgroup Policy."""
-        return device.cgroups_major in _CGROUPS.get(group, [])
+        return device.major in _CGROUPS.get(group, [])
 
-    def get_cgroups_rules(self, group: PolicyGroup) -> List[str]:
+    def get_cgroups_rules(self, group: PolicyGroup) -> list[str]:
         """Generate cgroups rules for a policy group."""
-        cgroups: List[str] = [f"c {dev}:* rwm" for dev in _CGROUPS[group]]
+        cgroups: list[str] = [f"c {dev}:* rwm" for dev in _CGROUPS[group]]
 
         # Lookup dynamic device groups from host
         if group in _CGROUPS_DYNAMIC_MAJOR:
             majors = {
-                device.cgroups_major
+                device.major
                 for device in self.sys_hardware.devices
                 if device.subsystem in _CGROUPS_DYNAMIC_MAJOR[group]
-                and device.cgroups_major not in _CGROUPS[group]
+                and device.major not in _CGROUPS[group]
             }
             cgroups.extend([f"c {dev}:* rwm" for dev in majors])
 
@@ -93,7 +92,7 @@ class HwPolicy(CoreSysAttributes):
             for device in self.sys_hardware.devices:
                 if (
                     device.subsystem not in _CGROUPS_DYNAMIC_MINOR[group]
-                    or device.cgroups_major in _CGROUPS[group]
+                    or device.major in _CGROUPS[group]
                 ):
                     continue
                 cgroups.append(self.get_cgroups_rule(device))
@@ -103,7 +102,7 @@ class HwPolicy(CoreSysAttributes):
     def get_cgroups_rule(self, device: Device) -> str:
         """Generate a cgroups rule for given device."""
         cgroup_type = "c" if device.subsystem != UdevSubsystem.DISK else "b"
-        return f"{cgroup_type} {device.cgroups_major}:{device.cgroups_minor} rwm"
+        return f"{cgroup_type} {device.major}:{device.minor} rwm"
 
     def get_full_access(self) -> str:
         """Get full access to all devices."""
@@ -111,7 +110,7 @@ class HwPolicy(CoreSysAttributes):
 
     def allowed_for_access(self, device: Device) -> bool:
         """Return True if allow to access to this device."""
-        if self.sys_hardware.disk.is_system_partition(device):
+        if self.sys_hardware.disk.is_used_by_system(device):
             return False
 
         return True

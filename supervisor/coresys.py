@@ -5,13 +5,14 @@ import asyncio
 from datetime import datetime
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Callable, Coroutine, Optional, TypeVar
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any, Callable, Coroutine, TypeVar
 
 import aiohttp
 import sentry_sdk
 
 from .config import CoreConfig
-from .const import ENV_SUPERVISOR_DEV
+from .const import ENV_SUPERVISOR_DEV, SERVER_SOFTWARE
 from .docker import DockerAPI
 from .utils.dt import UTC, get_time_zone
 
@@ -20,22 +21,23 @@ if TYPE_CHECKING:
     from .api import RestAPI
     from .arch import CpuArch
     from .auth import Auth
+    from .backups.manager import BackupManager
+    from .bus import Bus
     from .core import Core
-    from .dbus import DBusManager
+    from .dbus.manager import DBusManager
     from .discovery import Discovery
-    from .hardware.module import HardwareManager
-    from .hassos import HassOS
+    from .hardware.manager import HardwareManager
     from .homeassistant.module import HomeAssistant
-    from .host import HostManager
+    from .host.manager import HostManager
     from .ingress import Ingress
     from .jobs import JobManager
     from .misc.scheduler import Scheduler
     from .misc.tasks import Tasks
-    from .plugins import PluginManager
+    from .os.manager import OSManager
+    from .plugins.manager import PluginManager
     from .resolution.module import ResolutionManager
     from .security import Security
     from .services import ServiceManager
-    from .snapshots import SnapshotManager
     from .store import StoreManager
     from .supervisor import Supervisor
     from .updater import Updater
@@ -52,8 +54,8 @@ class CoreSys:
     def __init__(self):
         """Initialize coresys."""
         # Static attributes protected
-        self._machine_id: Optional[str] = None
-        self._machine: Optional[str] = None
+        self._machine_id: str | None = None
+        self._machine: str | None = None
 
         # External objects
         self._loop: asyncio.BaseEventLoop = asyncio.get_running_loop()
@@ -64,29 +66,35 @@ class CoreSys:
         self._docker: DockerAPI = DockerAPI()
 
         # Internal objects pointers
-        self._core: Optional[Core] = None
-        self._arch: Optional[CpuArch] = None
-        self._auth: Optional[Auth] = None
-        self._homeassistant: Optional[HomeAssistant] = None
-        self._supervisor: Optional[Supervisor] = None
-        self._addons: Optional[AddonManager] = None
-        self._api: Optional[RestAPI] = None
-        self._updater: Optional[Updater] = None
-        self._snapshots: Optional[SnapshotManager] = None
-        self._tasks: Optional[Tasks] = None
-        self._host: Optional[HostManager] = None
-        self._ingress: Optional[Ingress] = None
-        self._dbus: Optional[DBusManager] = None
-        self._hassos: Optional[HassOS] = None
-        self._services: Optional[ServiceManager] = None
-        self._scheduler: Optional[Scheduler] = None
-        self._store: Optional[StoreManager] = None
-        self._discovery: Optional[Discovery] = None
-        self._hardware: Optional[HardwareManager] = None
-        self._plugins: Optional[PluginManager] = None
-        self._resolution: Optional[ResolutionManager] = None
-        self._jobs: Optional[JobManager] = None
-        self._security: Optional[Security] = None
+        self._core: Core | None = None
+        self._arch: CpuArch | None = None
+        self._auth: Auth | None = None
+        self._homeassistant: HomeAssistant | None = None
+        self._supervisor: Supervisor | None = None
+        self._addons: AddonManager | None = None
+        self._api: RestAPI | None = None
+        self._updater: Updater | None = None
+        self._backups: BackupManager | None = None
+        self._tasks: Tasks | None = None
+        self._host: HostManager | None = None
+        self._ingress: Ingress | None = None
+        self._dbus: DBusManager | None = None
+        self._os: OSManager | None = None
+        self._services: ServiceManager | None = None
+        self._scheduler: Scheduler | None = None
+        self._store: StoreManager | None = None
+        self._discovery: Discovery | None = None
+        self._hardware: HardwareManager | None = None
+        self._plugins: PluginManager | None = None
+        self._resolution: ResolutionManager | None = None
+        self._jobs: JobManager | None = None
+        self._security: Security | None = None
+        self._bus: Bus | None = None
+
+        # Set default header for aiohttp
+        self._websession._default_headers = MappingProxyType(
+            {aiohttp.hdrs.USER_AGENT: SERVER_SOFTWARE}
+        )
 
     @property
     def dev(self) -> bool:
@@ -277,18 +285,18 @@ class CoreSys:
         self._store = value
 
     @property
-    def snapshots(self) -> SnapshotManager:
-        """Return SnapshotManager object."""
-        if self._snapshots is None:
-            raise RuntimeError("SnapshotManager not set!")
-        return self._snapshots
+    def backups(self) -> BackupManager:
+        """Return BackupManager object."""
+        if self._backups is None:
+            raise RuntimeError("BackupManager not set!")
+        return self._backups
 
-    @snapshots.setter
-    def snapshots(self, value: SnapshotManager) -> None:
-        """Set a SnapshotManager object."""
-        if self._snapshots:
-            raise RuntimeError("SnapshotsManager already set!")
-        self._snapshots = value
+    @backups.setter
+    def backups(self, value: BackupManager) -> None:
+        """Set a BackupManager object."""
+        if self._backups:
+            raise RuntimeError("BackupsManager already set!")
+        self._backups = value
 
     @property
     def tasks(self) -> Tasks:
@@ -347,6 +355,20 @@ class CoreSys:
         self._dbus = value
 
     @property
+    def bus(self) -> Bus:
+        """Return Bus object."""
+        if self._bus is None:
+            raise RuntimeError("Bus not set!")
+        return self._bus
+
+    @bus.setter
+    def bus(self, value: Bus) -> None:
+        """Set a Bus object."""
+        if self._bus:
+            raise RuntimeError("Bus already set!")
+        self._bus = value
+
+    @property
     def host(self) -> HostManager:
         """Return HostManager object."""
         if self._host is None:
@@ -389,18 +411,18 @@ class CoreSys:
         self._ingress = value
 
     @property
-    def hassos(self) -> HassOS:
-        """Return HassOS object."""
-        if self._hassos is None:
-            raise RuntimeError("HassOS not set!")
-        return self._hassos
+    def os(self) -> OSManager:
+        """Return OSManager object."""
+        if self._os is None:
+            raise RuntimeError("OSManager not set!")
+        return self._os
 
-    @hassos.setter
-    def hassos(self, value: HassOS) -> None:
-        """Set a HassOS object."""
-        if self._hassos:
-            raise RuntimeError("HassOS already set!")
-        self._hassos = value
+    @os.setter
+    def os(self, value: OSManager) -> None:
+        """Set a OSManager object."""
+        if self._os:
+            raise RuntimeError("OSManager already set!")
+        self._os = value
 
     @property
     def resolution(self) -> ResolutionManager:
@@ -445,7 +467,7 @@ class CoreSys:
         self._jobs = value
 
     @property
-    def machine(self) -> Optional[str]:
+    def machine(self) -> str | None:
         """Return machine type string."""
         return self._machine
 
@@ -457,7 +479,7 @@ class CoreSys:
         self._machine = value
 
     @property
-    def machine_id(self) -> Optional[str]:
+    def machine_id(self) -> str | None:
         """Return machine-id type string."""
         return self._machine_id
 
@@ -498,7 +520,7 @@ class CoreSysAttributes:
         return self.coresys.timezone
 
     @property
-    def sys_machine(self) -> Optional[str]:
+    def sys_machine(self) -> str | None:
         """Return running machine type of the Supervisor system."""
         return self.coresys.machine
 
@@ -534,8 +556,13 @@ class CoreSysAttributes:
 
     @property
     def sys_core(self) -> Core:
-        """Return core object."""
+        """Return Core object."""
         return self.coresys.core
+
+    @property
+    def sys_bus(self) -> Bus:
+        """Return Bus object."""
+        return self.coresys.bus
 
     @property
     def sys_plugins(self) -> PluginManager:
@@ -583,9 +610,9 @@ class CoreSysAttributes:
         return self.coresys.store
 
     @property
-    def sys_snapshots(self) -> SnapshotManager:
-        """Return SnapshotManager object."""
-        return self.coresys.snapshots
+    def sys_backups(self) -> BackupManager:
+        """Return BackupManager object."""
+        return self.coresys.backups
 
     @property
     def sys_tasks(self) -> Tasks:
@@ -623,9 +650,9 @@ class CoreSysAttributes:
         return self.coresys.ingress
 
     @property
-    def sys_hassos(self) -> HassOS:
-        """Return HassOS object."""
-        return self.coresys.hassos
+    def sys_os(self) -> OSManager:
+        """Return OSManager object."""
+        return self.coresys.os
 
     @property
     def sys_resolution(self) -> ResolutionManager:

@@ -1,7 +1,6 @@
 """Helpers to evaluate the system."""
 from importlib import import_module
 import logging
-from typing import Dict, List, Set
 
 from ..coresys import CoreSys, CoreSysAttributes
 from ..exceptions import ResolutionNotFound
@@ -12,7 +11,6 @@ from .validate import get_valid_modules
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
 UNHEALTHY = [
-    UnsupportedReason.CONTAINER,
     UnsupportedReason.DOCKER_VERSION,
     UnsupportedReason.LXC,
     UnsupportedReason.PRIVILEGED,
@@ -25,13 +23,13 @@ class ResolutionEvaluation(CoreSysAttributes):
     def __init__(self, coresys: CoreSys) -> None:
         """Initialize the evaluation class."""
         self.coresys = coresys
-        self.cached_images: Set[str] = set()
-        self._evalutions: Dict[str, EvaluateBase] = {}
+        self.cached_images: set[str] = set()
+        self._evalutions: dict[str, EvaluateBase] = {}
 
         self._load()
 
     @property
-    def all_evaluations(self) -> List[EvaluateBase]:
+    def all_evaluations(self) -> list[EvaluateBase]:
         """Return all list of all checks."""
         return list(self._evalutions.values())
 

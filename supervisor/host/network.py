@@ -4,15 +4,15 @@ from __future__ import annotations
 import asyncio
 from ipaddress import IPv4Address, IPv4Interface, IPv6Address, IPv6Interface
 import logging
-from typing import List, Optional, Union
 
 import attr
 
 from ..const import ATTR_HOST_INTERNET
 from ..coresys import CoreSys, CoreSysAttributes
 from ..dbus.const import (
-    DBUS_NAME_NM_CONNECTION_ACTIVE_CHANGED,
+    DBUS_SIGNAL_NM_CONNECTION_ACTIVE_CHANGED,
     ConnectionStateType,
+    ConnectivityState,
     DeviceType,
     InterfaceMethod as NMInterfaceMethod,
     WirelessMethodType,
@@ -20,11 +20,10 @@ from ..dbus.const import (
 from ..dbus.network.accesspoint import NetworkWirelessAP
 from ..dbus.network.connection import NetworkConnection
 from ..dbus.network.interface import NetworkInterface
-from ..dbus.payloads.generate import interface_update_payload
+from ..dbus.network.setting.generate import get_connection_from_interface
 from ..exceptions import (
     DBusError,
     DBusNotConnectedError,
-    DBusProgramError,
     HostNetworkError,
     HostNetworkNotFound,
     HostNotSupportedError,
@@ -40,10 +39,10 @@ class NetworkManager(CoreSysAttributes):
     def __init__(self, coresys: CoreSys):
         """Initialize system center handling."""
         self.coresys: CoreSys = coresys
-        self._connectivity: Optional[bool] = None
+        self._connectivity: bool | None = None
 
     @property
-    def connectivity(self) -> Optional[bool]:
+    def connectivity(self) -> bool | None:
         """Return true current connectivity state."""
         return self._connectivity
 
@@ -58,19 +57,19 @@ class NetworkManager(CoreSysAttributes):
         )
 
     @property
-    def interfaces(self) -> List[Interface]:
+    def interfaces(self) -> list[Interface]:
         """Return a dictionary of active interfaces."""
-        interfaces: List[Interface] = []
+        interfaces: list[Interface] = []
         for inet in self.sys_dbus.network.interfaces.values():
             interfaces.append(Interface.from_dbus_interface(inet))
 
         return interfaces
 
     @property
-    def dns_servers(self) -> List[str]:
+    def dns_servers(self) -> list[str]:
         """Return a list of local DNS servers."""
         # Read all local dns servers
-        servers: List[str] = []
+        servers: list[str] = []
         for config in self.sys_dbus.network.dns.configuration:
             if config.vpn or not config.nameservers:
                 continue
@@ -79,18 +78,15 @@ class NetworkManager(CoreSysAttributes):
         return list(dict.fromkeys(servers))
 
     async def check_connectivity(self):
-        """Check the internet connection.
+        """Check the internet connection."""
 
-        ConnectionState 4 == FULL (has internet)
-        https://developer.gnome.org/NetworkManager/stable/nm-dbus-types.html#NMConnectivityState
-        """
         if not self.sys_dbus.network.connectivity_enabled:
             return
 
         # Check connectivity
         try:
             state = await self.sys_dbus.network.check_connectivity()
-            self.connectivity = state[0] == 4
+            self.connectivity = state[0] == ConnectivityState.CONNECTIVITY_FULL
         except DBusError as err:
             _LOGGER.warning("Can't update connectivity information: %s", err)
             self.connectivity = False
@@ -112,14 +108,16 @@ class NetworkManager(CoreSysAttributes):
         except DBusError:
             _LOGGER.warning("Can't update network information!")
         except DBusNotConnectedError as err:
-            _LOGGER.error("No network D-Bus connection available")
-            raise HostNotSupportedError() from err
+            raise HostNotSupportedError(
+                "No network D-Bus connection available", _LOGGER.error
+            ) from err
 
         await self.check_connectivity()
 
     async def apply_changes(self, interface: Interface) -> None:
         """Apply Interface changes to host."""
         inet = self.sys_dbus.network.interfaces.get(interface.name)
+        con: NetworkConnection = None
 
         # Update exist configuration
         if (
@@ -128,7 +126,8 @@ class NetworkManager(CoreSysAttributes):
             and inet.settings.connection.interface_name == interface.name
             and interface.enabled
         ):
-            settings = interface_update_payload(
+            _LOGGER.debug("Updating existing configuration for %s", interface.name)
+            settings = get_connection_from_interface(
                 interface,
                 name=inet.settings.connection.id,
                 uuid=inet.settings.connection.uuid,
@@ -136,73 +135,103 @@ class NetworkManager(CoreSysAttributes):
 
             try:
                 await inet.settings.update(settings)
-                await self.sys_dbus.network.activate_connection(
+                con = await self.sys_dbus.network.activate_connection(
                     inet.settings.object_path, inet.object_path
                 )
+                _LOGGER.debug(
+                    "activate_connection returns %s",
+                    con.object_path,
+                )
             except DBusError as err:
-                _LOGGER.error("Can't update config on %s: %s", interface.name, err)
-                raise HostNetworkError() from err
+                raise HostNetworkError(
+                    f"Can't update config on {interface.name}: {err}", _LOGGER.error
+                ) from err
 
         # Create new configuration and activate interface
         elif inet and interface.enabled:
-            settings = interface_update_payload(interface)
+            _LOGGER.debug("Create new configuration for %s", interface.name)
+            settings = get_connection_from_interface(interface)
 
             try:
-                await self.sys_dbus.network.add_and_activate_connection(
+                settings, con = await self.sys_dbus.network.add_and_activate_connection(
                     settings, inet.object_path
                 )
-            except DBusError as err:
-                _LOGGER.error(
-                    "Can't create config and activate %s: %s", interface.name, err
+                _LOGGER.debug(
+                    "add_and_activate_connection returns %s",
+                    con.object_path,
                 )
-                raise HostNetworkError() from err
+            except DBusError as err:
+                raise HostNetworkError(
+                    f"Can't create config and activate {interface.name}: {err}",
+                    _LOGGER.error,
+                ) from err
 
         # Remove config from interface
         elif inet and inet.settings and not interface.enabled:
             try:
                 await inet.settings.delete()
             except DBusError as err:
-                _LOGGER.error("Can't disable interface %s: %s", interface.name, err)
-                raise HostNetworkError() from err
+                raise HostNetworkError(
+                    f"Can't disable interface {interface.name}: {err}", _LOGGER.error
+                ) from err
 
         # Create new interface (like vlan)
         elif not inet:
-            settings = interface_update_payload(interface)
+            settings = get_connection_from_interface(interface)
 
             try:
                 await self.sys_dbus.network.settings.add_connection(settings)
             except DBusError as err:
-                _LOGGER.error("Can't create new interface: %s", err)
-                raise HostNetworkError() from err
+                raise HostNetworkError(
+                    f"Can't create new interface: {err}", _LOGGER.error
+                ) from err
         else:
-            _LOGGER.warning("Requested Network interface update is not possible")
-            raise HostNetworkError()
+            raise HostNetworkError(
+                "Requested Network interface update is not possible", _LOGGER.warning
+            )
 
-        await self.sys_dbus.network.dbus.wait_signal(
-            DBUS_NAME_NM_CONNECTION_ACTIVE_CHANGED
-        )
+        if con:
+            async with con.dbus.signal(
+                DBUS_SIGNAL_NM_CONNECTION_ACTIVE_CHANGED
+            ) as signal:
+                # From this point we monitor signals. However, it might be that
+                # the state change before this point. Get the state currently to
+                # avoid any race condition.
+                await con.update()
+                state: ConnectionStateType = con.state
+
+                while state != ConnectionStateType.ACTIVATED:
+                    if state == ConnectionStateType.DEACTIVATED:
+                        raise HostNetworkError(
+                            "Activating connection failed, check connection settings."
+                        )
+
+                    msg = await signal.wait_for_signal()
+                    state = msg[0]
+                    _LOGGER.debug("Active connection state changed to %s", state)
+
         await self.update()
 
-    async def scan_wifi(self, interface: Interface) -> List[AccessPoint]:
+    async def scan_wifi(self, interface: Interface) -> list[AccessPoint]:
         """Scan on Interface for AccessPoint."""
         inet = self.sys_dbus.network.interfaces.get(interface.name)
 
         if inet.type != DeviceType.WIRELESS:
-            _LOGGER.error("Can only scan with wireless card - %s", interface.name)
-            raise HostNotSupportedError()
+            raise HostNotSupportedError(
+                f"Can only scan with wireless card - {interface.name}", _LOGGER.error
+            )
 
         # Request Scan
         try:
             await inet.wireless.request_scan()
-        except DBusProgramError as err:
-            _LOGGER.debug("Can't request a new scan: %s", err)
         except DBusError as err:
+            _LOGGER.warning("Can't request a new scan: %s", err)
             raise HostNetworkError() from err
         else:
             await asyncio.sleep(5)
 
         # Process AP
-        accesspoints: List[AccessPoint] = []
+        accesspoints: list[AccessPoint] = []
         for ap_object in (await inet.wireless.get_all_accesspoints())[0]:
             accesspoint = NetworkWirelessAP(ap_object)
 
@@ -241,9 +270,9 @@ class IpConfig:
     """Represent a IP configuration."""
 
     method: InterfaceMethod = attr.ib()
-    address: List[Union[IPv4Interface, IPv6Interface]] = attr.ib()
-    gateway: Optional[Union[IPv4Address, IPv6Address]] = attr.ib()
-    nameservers: List[Union[IPv4Address, IPv6Address]] = attr.ib()
+    address: list[IPv4Interface | IPv6Interface] = attr.ib()
+    gateway: IPv4Address | IPv6Address | None = attr.ib()
+    nameservers: list[IPv4Address | IPv6Address] = attr.ib()
 
 
 @attr.s(slots=True)
@@ -253,8 +282,8 @@ class WifiConfig:
     mode: WifiMode = attr.ib()
     ssid: str = attr.ib()
     auth: AuthMethod = attr.ib()
-    psk: Optional[str] = attr.ib()
-    signal: Optional[int] = attr.ib()
+    psk: str | None = attr.ib()
+    signal: int | None = attr.ib()
 
 
 @attr.s(slots=True)
@@ -274,10 +303,10 @@ class Interface:
     connected: bool = attr.ib()
     primary: bool = attr.ib()
     type: InterfaceType = attr.ib()
-    ipv4: Optional[IpConfig] = attr.ib()
-    ipv6: Optional[IpConfig] = attr.ib()
-    wifi: Optional[WifiConfig] = attr.ib()
-    vlan: Optional[VlanConfig] = attr.ib()
+    ipv4: IpConfig | None = attr.ib()
+    ipv6: IpConfig | None = attr.ib()
+    wifi: WifiConfig | None = attr.ib()
+    vlan: VlanConfig | None = attr.ib()
 
     @staticmethod
     def from_dbus_interface(inet: NetworkInterface) -> Interface:
@@ -320,7 +349,7 @@ class Interface:
         return mapping.get(method, InterfaceMethod.DISABLED)
 
     @staticmethod
-    def _map_nm_connected(connection: Optional[NetworkConnection]) -> bool:
+    def _map_nm_connected(connection: NetworkConnection | None) -> bool:
         """Map connectivity state."""
         if not connection:
             return False
@@ -340,7 +369,7 @@ class Interface:
         return mapping[device_type]
 
     @staticmethod
-    def _map_nm_wifi(inet: NetworkInterface) -> Optional[WifiConfig]:
+    def _map_nm_wifi(inet: NetworkInterface) -> WifiConfig | None:
         """Create mapping to nm wifi property."""
         if inet.type != DeviceType.WIRELESS or not inet.settings:
             return None
@@ -376,7 +405,7 @@ class Interface:
         )
 
     @staticmethod
-    def _map_nm_vlan(inet: NetworkInterface) -> Optional[WifiConfig]:
+    def _map_nm_vlan(inet: NetworkInterface) -> WifiConfig | None:
         """Create mapping to nm vlan property."""
         if inet.type != DeviceType.VLAN or not inet.settings:
             return None

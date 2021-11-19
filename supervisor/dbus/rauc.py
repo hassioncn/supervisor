@@ -3,17 +3,17 @@ import logging
 from typing import Optional
 
 from ..exceptions import DBusError, DBusInterfaceError
-from ..utils.gdbus import DBus
+from ..utils.dbus import DBus
 from .const import (
     DBUS_ATTR_BOOT_SLOT,
     DBUS_ATTR_COMPATIBLE,
     DBUS_ATTR_LAST_ERROR,
     DBUS_ATTR_OPERATION,
     DBUS_ATTR_VARIANT,
+    DBUS_IFACE_RAUC_INSTALLER,
     DBUS_NAME_RAUC,
-    DBUS_NAME_RAUC_INSTALLER,
-    DBUS_NAME_RAUC_INSTALLER_COMPLETED,
     DBUS_OBJECT_BASE,
+    DBUS_SIGNAL_RAUC_INSTALLER_COMPLETED,
     RaucState,
 )
 from .interface import DBusInterface
@@ -75,7 +75,7 @@ class Rauc(DBusInterface):
 
         Return a coroutine.
         """
-        return self.dbus.Installer.Install(raucb_file)
+        return self.dbus.Installer.Install(str(raucb_file))
 
     @dbus_connected
     def get_slot_status(self):
@@ -91,7 +91,7 @@ class Rauc(DBusInterface):
 
         Return a coroutine.
         """
-        return self.dbus.wait_signal(DBUS_NAME_RAUC_INSTALLER_COMPLETED)
+        return self.dbus.wait_signal(DBUS_SIGNAL_RAUC_INSTALLER_COMPLETED)
 
     @dbus_connected
     def mark(self, state: RaucState, slot_identifier: str):
@@ -104,7 +104,7 @@ class Rauc(DBusInterface):
     @dbus_connected
     async def update(self):
         """Update Properties."""
-        data = await self.dbus.get_properties(DBUS_NAME_RAUC_INSTALLER)
+        data = await self.dbus.get_properties(DBUS_IFACE_RAUC_INSTALLER)
         if not data:
             _LOGGER.warning("Can't get properties for rauc")
             return

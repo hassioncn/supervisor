@@ -107,6 +107,10 @@ class HassOSJobError(HassOSError, JobException):
     """Function not supported by HassOS."""
 
 
+class HassOSDataDiskError(HassOSError):
+    """Issues with the DataDisk feature from HAOS."""
+
+
 # HaCli
 
 
@@ -259,31 +263,31 @@ class ServicesError(HassioError):
     """Services Errors."""
 
 
-# utils/gdbus
+# utils/dbus
 
 
 class DBusError(HassioError):
-    """DBus generic error."""
+    """D-Bus generic error."""
 
 
 class DBusNotConnectedError(HostNotSupportedError):
-    """DBus is not connected and call a method."""
+    """D-Bus is not connected and call a method."""
 
 
 class DBusInterfaceError(HassioNotSupportedError):
-    """DBus interface not connected."""
+    """D-Bus interface not connected."""
 
 
 class DBusFatalError(DBusError):
-    """DBus call going wrong."""
+    """D-Bus call going wrong."""
+
+
+class DBusInterfaceMethodError(DBusInterfaceError):
+    """D-Bus method was not defined."""
 
 
 class DBusParseError(DBusError):
-    """DBus parse error."""
-
-
-class DBusProgramError(DBusError):
-    """DBus application error."""
+    """D-Bus parse error."""
 
 
 # util/apparmor

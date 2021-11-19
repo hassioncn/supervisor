@@ -6,7 +6,7 @@ import asyncio
 from contextlib import suppress
 import logging
 import secrets
-from typing import Awaitable, Optional
+from typing import Optional
 
 import aiohttp
 from awesomeversion import AwesomeVersion
@@ -42,11 +42,6 @@ class PluginObserver(PluginBase):
     def supervisor_token(self) -> str:
         """Return an access token for the Observer API."""
         return self._data.get(ATTR_ACCESS_TOKEN)
-
-    @property
-    def in_progress(self) -> bool:
-        """Return True if a task is in progress."""
-        return self.instance.in_progress
 
     async def load(self) -> None:
         """Load observer setup."""
@@ -145,13 +140,6 @@ class PluginObserver(PluginBase):
         except DockerError as err:
             raise ObserverError() from err
 
-    def is_running(self) -> Awaitable[bool]:
-        """Return True if Docker container is running.
-
-        Return a coroutine.
-        """
-        return self.instance.is_running()
-
     async def rebuild(self) -> None:
         """Rebuild Observer Docker container."""
         with suppress(DockerError):
@@ -161,7 +149,7 @@ class PluginObserver(PluginBase):
     async def check_system_runtime(self) -> bool:
         """Check if the observer is running."""
         try:
-            timeout = aiohttp.ClientTimeout(total=5)
+            timeout = aiohttp.ClientTimeout(total=10)
             async with self.sys_websession.get(
                 f"http://{self.sys_docker.network.observer!s}/ping", timeout=timeout
             ) as request:

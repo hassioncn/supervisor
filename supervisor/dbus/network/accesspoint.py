@@ -1,20 +1,23 @@
 """Connection object for Network Manager."""
 
-from ...utils.gdbus import DBus
+from ...utils.dbus import DBus
 from ..const import (
     DBUS_ATTR_FREQUENCY,
     DBUS_ATTR_HWADDRESS,
     DBUS_ATTR_MODE,
     DBUS_ATTR_SSID,
     DBUS_ATTR_STRENGTH,
-    DBUS_NAME_ACCESSPOINT,
+    DBUS_IFACE_ACCESSPOINT,
     DBUS_NAME_NM,
 )
 from ..interface import DBusInterfaceProxy
 
 
 class NetworkWirelessAP(DBusInterfaceProxy):
-    """NetworkWireless AP object for Network Manager."""
+    """NetworkWireless AP object for Network Manager.
+
+    https://developer.gnome.org/NetworkManager/stable/gdbus-org.freedesktop.NetworkManager.AccessPoint.html
+    """
 
     def __init__(self, object_path: str) -> None:
         """Initialize NetworkWireless AP object."""
@@ -44,9 +47,9 @@ class NetworkWirelessAP(DBusInterfaceProxy):
     @property
     def strength(self) -> int:
         """Return details about mac address."""
-        return int(self.properties[DBUS_ATTR_STRENGTH][0])
+        return int(self.properties[DBUS_ATTR_STRENGTH])
 
     async def connect(self) -> None:
         """Get connection information."""
         self.dbus = await DBus.connect(DBUS_NAME_NM, self.object_path)
-        self.properties = await self.dbus.get_properties(DBUS_NAME_ACCESSPOINT)
+        self.properties = await self.dbus.get_properties(DBUS_IFACE_ACCESSPOINT)

@@ -1,22 +1,28 @@
 """Network Manager implementation for DBUS."""
+import asyncio
 import logging
-from typing import Any, Awaitable, Dict
+from typing import Any, Awaitable
 
 from awesomeversion import AwesomeVersion, AwesomeVersionException
 import sentry_sdk
 
+from supervisor.dbus.network.connection import NetworkConnection
+from supervisor.dbus.network.setting import NetworkSetting
+
 from ...exceptions import (
     DBusError,
+    DBusFatalError,
     DBusInterfaceError,
-    DBusProgramError,
+    DBusInterfaceMethodError,
     HostNotSupportedError,
 )
-from ...utils.gdbus import DBus
+from ...utils.dbus import DBus
 from ..const import (
     DBUS_ATTR_CONNECTION_ENABLED,
     DBUS_ATTR_DEVICES,
     DBUS_ATTR_PRIMARY_CONNECTION,
     DBUS_ATTR_VERSION,
+    DBUS_IFACE_NM,
     DBUS_NAME_NM,
     DBUS_OBJECT_BASE,
     DBUS_OBJECT_NM,
@@ -34,7 +40,10 @@ MINIMAL_VERSION = AwesomeVersion("1.14.6")
 
 
 class NetworkManager(DBusInterface):
-    """Handle D-Bus interface for Network Manager."""
+    """Handle D-Bus interface for Network Manager.
+
+    https://developer.gnome.org/NetworkManager/stable/gdbus-org.freedesktop.NetworkManager.html
+    """
 
     name = DBUS_NAME_NM
 
@@ -42,9 +51,9 @@ class NetworkManager(DBusInterface):
         """Initialize Properties."""
         self._dns: NetworkManagerDNS = NetworkManagerDNS()
         self._settings: NetworkManagerSettings = NetworkManagerSettings()
-        self._interfaces: Dict[str, NetworkInterface] = {}
+        self._interfaces: dict[str, NetworkInterface] = {}
 
-        self.properties: Dict[str, Any] = {}
+        self.properties: dict[str, Any] = {}
 
     @property
     def dns(self) -> NetworkManagerDNS:
@@ -57,7 +66,7 @@ class NetworkManager(DBusInterface):
         return self._settings
 
     @property
-    def interfaces(self) -> Dict[str, NetworkInterface]:
+    def interfaces(self) -> dict[str, NetworkInterface]:
         """Return a dictionary of active interfaces."""
         return self._interfaces
 
@@ -72,22 +81,31 @@ class NetworkManager(DBusInterface):
         return AwesomeVersion(self.properties[DBUS_ATTR_VERSION])
 
     @dbus_connected
-    def activate_connection(
+    async def activate_connection(
         self, connection_object: str, device_object: str
-    ) -> Awaitable[Any]:
+    ) -> NetworkConnection:
         """Activate a connction on a device."""
-        return self.dbus.ActivateConnection(
-            connection_object, device_object, DBUS_OBJECT_BASE
+        result = await self.dbus.ActivateConnection(
+            ("o", connection_object), ("o", device_object), ("o", DBUS_OBJECT_BASE)
         )
+        obj_active_con = result[0]
+        active_con = NetworkConnection(obj_active_con)
+        await active_con.connect()
+        return active_con
 
     @dbus_connected
-    def add_and_activate_connection(
-        self, settings: str, device_object: str
-    ) -> Awaitable[Any]:
+    async def add_and_activate_connection(
+        self, settings: Any, device_object: str
+    ) -> tuple[NetworkSetting, NetworkConnection]:
         """Activate a connction on a device."""
-        return self.dbus.AddAndActivateConnection(
-            settings, device_object, DBUS_OBJECT_BASE
+        obj_con_setting, obj_active_con = await self.dbus.AddAndActivateConnection(
+            ("a{sa{sv}}", settings), ("o", device_object), ("o", DBUS_OBJECT_BASE)
         )
+
+        con_setting = NetworkSetting(obj_con_setting)
+        active_con = NetworkConnection(obj_active_con)
+        await asyncio.gather(con_setting.connect(), active_con.connect())
+        return con_setting, active_con
 
     @dbus_connected
     async def check_connectivity(self) -> Awaitable[Any]:
@@ -118,7 +136,7 @@ class NetworkManager(DBusInterface):
 
     async def _validate_version(self) -> None:
         """Validate Version of NetworkManager."""
-        self.properties = await self.dbus.get_properties(DBUS_NAME_NM)
+        self.properties = await self.dbus.get_properties(DBUS_IFACE_NM)
 
         try:
             if self.version >= MINIMAL_VERSION:
@@ -126,13 +144,15 @@ class NetworkManager(DBusInterface):
         except (AwesomeVersionException, KeyError):
             pass
 
-        _LOGGER.error("Version '%s' of NetworkManager is not supported!", self.version)
-        raise HostNotSupportedError()
+        raise HostNotSupportedError(
+            f"Version '{self.version}' of NetworkManager is not supported!",
+            _LOGGER.error,
+        )
 
     @dbus_connected
     async def update(self):
         """Update Properties."""
-        self.properties = await self.dbus.get_properties(DBUS_NAME_NM)
+        self.properties = await self.dbus.get_properties(DBUS_IFACE_NM)
 
         await self.dns.update()
 
@@ -143,7 +163,10 @@ class NetworkManager(DBusInterface):
             # Connect to interface
             try:
                 await interface.connect()
-            except DBusProgramError as err:
+            except (DBusFatalError, DBusInterfaceMethodError) as err:
+                # Docker creates and deletes interfaces quite often, sometimes
+                # this causes a race condition: A device disappears while we
+                # try to query it. Ignore those cases.
                 _LOGGER.warning("Can't process %s: %s", device, err)
                 continue
             except Exception as err:  # pylint: disable=broad-except

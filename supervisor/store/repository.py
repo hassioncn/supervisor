@@ -1,7 +1,7 @@
 """Represent a Supervisor repository."""
 import logging
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 import voluptuous as vol
 
@@ -55,7 +55,7 @@ class Repository(CoreSysAttributes):
         return self._type
 
     @property
-    def data(self) -> Dict:
+    def data(self) -> dict:
         """Return data struct repository."""
         return self.sys_store.data.repositories.get(self.slug, {})
 
@@ -112,7 +112,6 @@ class Repository(CoreSysAttributes):
     async def remove(self) -> None:
         """Remove add-on repository."""
         if self.type != StoreType.GIT:
-            _LOGGER.error("Can't remove built-in repositories!")
-            raise StoreError()
+            raise StoreError("Can't remove built-in repositories!", _LOGGER.error)
 
         await self.git.remove()

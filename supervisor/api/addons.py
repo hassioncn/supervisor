@@ -1,7 +1,7 @@
 """Init file for Supervisor Home Assistant RESTful API."""
 import asyncio
 import logging
-from typing import Any, Awaitable, Dict, List
+from typing import Any, Awaitable
 
 from aiohttp import web
 import voluptuous as vol
@@ -110,7 +110,7 @@ from .utils import api_process, api_process_raw, api_validate, json_loads
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = vol.Schema({vol.Optional(ATTR_VERSION): vol.Coerce(str)})
+SCHEMA_VERSION = vol.Schema({vol.Optional(ATTR_VERSION): str})
 
 # pylint: disable=no-value-for-parameter
 SCHEMA_OPTIONS = vol.Schema(
@@ -118,8 +118,8 @@ SCHEMA_OPTIONS = vol.Schema(
         vol.Optional(ATTR_BOOT): vol.Coerce(AddonBoot),
         vol.Optional(ATTR_NETWORK): vol.Maybe(docker_ports),
         vol.Optional(ATTR_AUTO_UPDATE): vol.Boolean(),
-        vol.Optional(ATTR_AUDIO_OUTPUT): vol.Maybe(vol.Coerce(str)),
-        vol.Optional(ATTR_AUDIO_INPUT): vol.Maybe(vol.Coerce(str)),
+        vol.Optional(ATTR_AUDIO_OUTPUT): vol.Maybe(str),
+        vol.Optional(ATTR_AUDIO_INPUT): vol.Maybe(str),
         vol.Optional(ATTR_INGRESS_PANEL): vol.Boolean(),
         vol.Optional(ATTR_WATCHDOG): vol.Boolean(),
     }
@@ -156,7 +156,7 @@ class APIAddons(CoreSysAttributes):
         return addon
 
     @api_process
-    async def list(self, request: web.Request) -> Dict[str, Any]:
+    async def list(self, request: web.Request) -> dict[str, Any]:
         """Return all add-ons or repositories."""
         data_addons = [
             {
@@ -201,7 +201,7 @@ class APIAddons(CoreSysAttributes):
         await asyncio.shield(self.sys_store.reload())
 
     @api_process
-    async def info(self, request: web.Request) -> Dict[str, Any]:
+    async def info(self, request: web.Request) -> dict[str, Any]:
         """Return add-on information."""
         addon: AnyAddon = self._extract_addon(request)
 
@@ -309,7 +309,7 @@ class APIAddons(CoreSysAttributes):
 
         # Extend schema with add-on specific validation
         addon_schema = SCHEMA_OPTIONS.extend(
-            {vol.Optional(ATTR_OPTIONS): vol.Any(None, addon.schema)}
+            {vol.Optional(ATTR_OPTIONS): vol.Maybe(addon.schema)}
         )
 
         # Validate/Process Body
@@ -390,7 +390,7 @@ class APIAddons(CoreSysAttributes):
     async def security(self, request: web.Request) -> None:
         """Store security options for add-on."""
         addon = self._extract_addon_installed(request)
-        body: Dict[str, Any] = await api_validate(SCHEMA_SECURITY, request)
+        body: dict[str, Any] = await api_validate(SCHEMA_SECURITY, request)
 
         if ATTR_PROTECTED in body:
             _LOGGER.warning("Changing protected flag for %s!", addon.slug)
@@ -399,7 +399,7 @@ class APIAddons(CoreSysAttributes):
         addon.save_persist()
 
     @api_process
-    async def stats(self, request: web.Request) -> Dict[str, Any]:
+    async def stats(self, request: web.Request) -> dict[str, Any]:
         """Return resource information."""
         addon = self._extract_addon_installed(request)
 
@@ -503,6 +503,6 @@ class APIAddons(CoreSysAttributes):
         await asyncio.shield(addon.write_stdin(data))
 
 
-def _pretty_services(addon: AnyAddon) -> List[str]:
+def _pretty_services(addon: AnyAddon) -> list[str]:
     """Return a simplified services role list."""
     return [f"{name}:{access}" for name, access in addon.services_role.items()]
