@@ -18,6 +18,7 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 
 class Security(FileConfiguration, CoreSysAttributes):
     """Handle Security properties."""
+
     def __init__(self, coresys: CoreSys):
         """Initialize updater."""
         super().__init__(FILE_HASSIO_SECURITY, SCHEMA_SECURITY_CONFIG)
@@ -54,9 +55,9 @@ class Security(FileConfiguration, CoreSysAttributes):
         self._data[ATTR_PWNED] = value
 
     async def verify_own_content(
-            self,
-            checksum: Optional[str] = None,
-            path: Optional[Path] = None) -> Awaitable[None]:
+        self, checksum: Optional[str] = None, path: Optional[Path] = None
+    ) -> Awaitable[None]:
+        """verify_own_content."""
         return
         # """Verify content from HA org."""
         # if not self.content_trust:
@@ -73,6 +74,7 @@ class Security(FileConfiguration, CoreSysAttributes):
         #     return
 
     async def verify_secret(self, pwned_hash: str) -> None:
+        """verify_secret."""
         return
         # """Verify pwned state of a secret."""
         # if not self.pwned:
