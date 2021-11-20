@@ -61,30 +61,30 @@ class Security(FileConfiguration, CoreSysAttributes):
         self, checksum: Optional[str] = None, path: Optional[Path] = None
     ) -> Awaitable[None]:
         return
-        """Verify content from HA org."""
-        if not self.content_trust:
-            _LOGGER.warning("Disabled content-trust, skip validation")
-            return
+        # """Verify content from HA org."""
+        # if not self.content_trust:
+        #     _LOGGER.warning("Disabled content-trust, skip validation")
+        #     return
 
-        try:
-            await vcn_validate(checksum, path, org="home-assistant.io")
-        except CodeNotaryUntrusted:
-            raise
-        except CodeNotaryError:
-            if self.force:
-                raise
-            return
+        # try:
+        #     await vcn_validate(checksum, path, org="home-assistant.io")
+        # except CodeNotaryUntrusted:
+        #     raise
+        # except CodeNotaryError:
+        #     if self.force:
+        #         raise
+        #     return
 
     async def verify_secret(self, pwned_hash: str) -> None:
         return
-        """Verify pwned state of a secret."""
-        if not self.pwned:
-            _LOGGER.warning("Disabled pwned, skip validation")
-            return
+        # """Verify pwned state of a secret."""
+        # if not self.pwned:
+        #     _LOGGER.warning("Disabled pwned, skip validation")
+        #     return
 
-        try:
-            await check_pwned_password(self.sys_websession, pwned_hash)
-        except PwnedError:
-            if self.force:
-                raise
-            return
+        # try:
+        #     await check_pwned_password(self.sys_websession, pwned_hash)
+        # except PwnedError:
+        #     if self.force:
+        #         raise
+        #     return
