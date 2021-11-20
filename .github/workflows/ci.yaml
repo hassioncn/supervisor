@@ -7,7 +7,7 @@ on:
         name:
           description: "CIName"
           required: true
-          default: "2021.06.8-CN"
+          default: "2021.10.8-CN"
 
 env:
   DEFAULT_PYTHON: 3.9
