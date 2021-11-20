@@ -83,11 +83,7 @@ jobs:
         uses: docker/login-action@v1.10.0
         with:
           registry: ghcr.io
-<<<<<<< HEAD
           username: ${{ secrets.GIT_USER }}
-=======
-          username: ${{ github.repository_owner }}
->>>>>>> da246dc40ad45bef09719741d48fd82f8073b760
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set build arguments
@@ -103,69 +99,10 @@ jobs:
             --target /data \
             --generic ${{ needs.init.outputs.version }}
 
-<<<<<<< HEAD
   run_supervisor:
     runs-on: ubuntu-latest
     name: Run the Supervisor
     needs: ["build", "init"]
-=======
-  codenotary:
-    name: CodeNotary signature
-    needs: init
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repository
-        if: needs.init.outputs.publish == 'true'
-        uses: actions/checkout@v2.3.5
-        with:
-          fetch-depth: 0
-
-      - name: Set version
-        if: needs.init.outputs.publish == 'true'
-        uses: home-assistant/actions/helpers/version@master
-        with:
-          type: ${{ env.BUILD_TYPE }}
-
-      - name: Signing image
-        if: needs.init.outputs.publish == 'true'
-        uses: home-assistant/actions/helpers/codenotary@master
-        with:
-          source: dir://${{ github.workspace }}
-          user: ${{ secrets.VCN_USER }}
-          password: ${{ secrets.VCN_PASSWORD }}
-          organisation: ${{ secrets.VCN_ORG }}
-
-  version:
-    name: Update version
-    needs: ["init", "run_supervisor"]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repository
-        if: needs.init.outputs.publish == 'true'
-        uses: actions/checkout@v2.3.5
-
-      - name: Initialize git
-        if: needs.init.outputs.publish == 'true'
-        uses: home-assistant/actions/helpers/git-init@master
-        with:
-          name: ${{ secrets.GIT_NAME }}
-          email: ${{ secrets.GIT_EMAIL }}
-          token: ${{ secrets.GIT_TOKEN }}
-
-      - name: Update version file
-        if: needs.init.outputs.publish == 'true'
-        uses: home-assistant/actions/helpers/version-push@master
-        with:
-          key: ${{ env.BUILD_NAME }}
-          version: ${{ needs.init.outputs.version }}
-          channel: ${{ needs.init.outputs.channel }}
-
-  run_supervisor:
-    runs-on: ubuntu-latest
-    name: Run the Supervisor
-    needs: ["build", "codenotary", "init"]
-    timeout-minutes: 60
->>>>>>> da246dc40ad45bef09719741d48fd82f8073b760
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2.3.5
@@ -183,13 +120,8 @@ jobs:
       - name: Pull Supervisor
         if: needs.init.outputs.publish == 'true'
         run: |
-<<<<<<< HEAD
           docker pull hassiocn/amd64-hassio-supervisor:${{ needs.init.outputs.version }}
           docker tag hassiocn/amd64-hassio-supervisor:${{ needs.init.outputs.version }} hassiocn/amd64-hassio-supervisor:runner
-=======
-          docker pull ghcr.io/home-assistant/amd64-hassio-supervisor:${{ needs.init.outputs.version }}
-          docker tag ghcr.io/home-assistant/amd64-hassio-supervisor:${{ needs.init.outputs.version }} homeassistant/amd64-hassio-supervisor:runner
->>>>>>> da246dc40ad45bef09719741d48fd82f8073b760
 
       - name: Create the Supervisor
         run: |
