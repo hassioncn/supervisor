@@ -10,10 +10,7 @@ from .const import (
     FILE_HASSIO_SECURITY,
 )
 from .coresys import CoreSys, CoreSysAttributes
-from .exceptions import CodeNotaryError, CodeNotaryUntrusted, PwnedError
-from .utils.codenotary import vcn_validate
 from .utils.common import FileConfiguration
-from .utils.pwned import check_pwned_password
 from .validate import SCHEMA_SECURITY_CONFIG
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
@@ -21,7 +18,6 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 
 class Security(FileConfiguration, CoreSysAttributes):
     """Handle Security properties."""
-
     def __init__(self, coresys: CoreSys):
         """Initialize updater."""
         super().__init__(FILE_HASSIO_SECURITY, SCHEMA_SECURITY_CONFIG)
@@ -58,8 +54,9 @@ class Security(FileConfiguration, CoreSysAttributes):
         self._data[ATTR_PWNED] = value
 
     async def verify_own_content(
-        self, checksum: Optional[str] = None, path: Optional[Path] = None
-    ) -> Awaitable[None]:
+            self,
+            checksum: Optional[str] = None,
+            path: Optional[Path] = None) -> Awaitable[None]:
         return
         # """Verify content from HA org."""
         # if not self.content_trust:
